@@ -31,31 +31,46 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("file");
     const folderRaw = String(formData.get("folder") || "").toLowerCase();
+    const fileTypeRaw = String(formData.get("fileType") || "image").toLowerCase();
 
     if (!(file instanceof File)) {
       return NextResponse.json(
-        { success: false, message: "File gambar tidak ditemukan." },
+        { success: false, message: "File tidak ditemukan." },
         { status: 400 },
       );
     }
 
-    if (!file.type.startsWith("image/")) {
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+    const fileType = fileTypeRaw === "video" ? "video" : "image";
+
+    if (fileType === "image" && !isImage) {
       return NextResponse.json(
         { success: false, message: "Hanya file gambar yang diperbolehkan." },
         { status: 400 },
       );
     }
 
-    const maxBytes = 5 * 1024 * 1024;
-    if (file.size > maxBytes) {
+    if (fileType === "video" && !isVideo) {
       return NextResponse.json(
-        { success: false, message: "Ukuran gambar maksimal 5MB." },
+        { success: false, message: "Hanya file video yang diperbolehkan." },
+        { status: 400 },
+      );
+    }
+
+    // Limit ukuran: 5MB untuk gambar, 50MB untuk video
+    const maxBytes = fileType === "video" ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      const maxMB = fileType === "video" ? 50 : 5;
+      return NextResponse.json(
+        { success: false, message: `Ukuran maksimal ${maxMB}MB.` },
         { status: 400 },
       );
     }
 
     const folder = folderRaw === "services" ? "services" : "portfolio";
-    const publicDir = path.join(process.cwd(), "public", "images", folder);
+    const fileFolder = fileType === "video" ? "videos" : "images";
+    const publicDir = path.join(process.cwd(), "public", fileFolder, folder);
     await mkdir(publicDir, { recursive: true });
 
     const filename = sanitizeFileName(file.name);
@@ -63,12 +78,12 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     await writeFile(outputPath, buffer);
 
-    const relativePath = `/images/${folder}/${filename}`;
+    const relativePath = `/${fileFolder}/${folder}/${filename}`;
     return NextResponse.json({ success: true, path: relativePath });
   } catch (error: any) {
     const status = error?.message === "unauthorized" ? 401 : 500;
     return NextResponse.json(
-      { success: false, message: error?.message || "Gagal mengunggah gambar." },
+      { success: false, message: error?.message || "Gagal mengunggah file." },
       { status },
     );
   }

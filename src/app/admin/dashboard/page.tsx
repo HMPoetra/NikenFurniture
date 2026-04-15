@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Users, Building2, Star, Mail, Grid, Wrench, MessageSquare, 
@@ -91,11 +91,13 @@ export default function DashboardAdmin() {
   const [opsiKategori, setOpsiKategori] = useState<string[]>([]);
   const [kategoriBaru, setKategoriBaru] = useState("");
   const [unggahField, setUnggahField] = useState<string | null>(null);
-  const [dragFieldAktif, setDragFieldAktif] = useState<string | null>(null);
   const [editingId, setEditingId]     = useState<number | string | null>(null);
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
+  const [daftarGambar, setDaftarGambar] = useState<string[]>([]);
+  const [daftarVideo, setDaftarVideo] = useState<string[]>([]);
   const formRef                       = useRef<HTMLDivElement>(null);
-  const fileInputRef                  = useRef<HTMLInputElement | null>(null);
+  const multiImageInputRef            = useRef<HTMLInputElement | null>(null);
+  const videoInputRef                 = useRef<HTMLInputElement | null>(null);
   const pesanTimer                    = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tampilPesan = (teks: string, tipe: "sukses" | "error" | "info" = "sukses") => {
@@ -119,6 +121,8 @@ export default function DashboardAdmin() {
     setEditingId(null);
     setSidebarMobileOpen(false);
     setPesan(null);
+    setDaftarGambar([]);
+    setDaftarVideo([]);
   }, [seksiAktif, token]);
 
   useEffect(() => {
@@ -201,6 +205,13 @@ export default function DashboardAdmin() {
         body[field] = form[field];
       }
     }
+
+    // Selalu kirim nilai media agar sinkron saat tambah/edit/hapus media.
+    if (seksiAktif === "portfolio_items" || seksiAktif === "services") {
+      body.images = JSON.stringify(daftarGambar);
+      body.videos = JSON.stringify(daftarVideo.slice(0, 1));
+    }
+
     const method = editingId ? "PUT" : "POST";
     const url    = editingId ? `${meta.api}?id=${editingId}` : meta.api;
     const res    = await fetch(url, {
@@ -210,7 +221,14 @@ export default function DashboardAdmin() {
     });
     const json = await res.json();
     tampilPesan(json.message || (res.ok ? "Berhasil disimpan" : "Gagal menyimpan"), res.ok ? "sukses" : "error");
-    if (res.ok) { muatSeksi(token, seksiAktif); setForm({}); setKategoriBaru(""); setEditingId(null); }
+    if (res.ok) { 
+      muatSeksi(token, seksiAktif); 
+      setForm({}); 
+      setKategoriBaru(""); 
+      setEditingId(null); 
+      setDaftarGambar([]);
+      setDaftarVideo([]);
+    }
   };
 
   const editItem = (item: any) => {
@@ -221,6 +239,30 @@ export default function DashboardAdmin() {
     }
     setEditingId(item.id ?? item.username ?? null);
     setForm(newForm);
+    
+    const parseMediaList = (value: unknown): string[] => {
+      if (Array.isArray(value)) {
+        return value.map((v) => String(v)).filter(Boolean);
+      }
+
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return [];
+
+        try {
+          const parsed = JSON.parse(trimmed);
+          return Array.isArray(parsed) ? parsed.map((v) => String(v)).filter(Boolean) : [trimmed];
+        } catch {
+          return [trimmed];
+        }
+      }
+
+      return [];
+    };
+
+    setDaftarGambar(parseMediaList(item.images));
+    setDaftarVideo(parseMediaList(item.videos).slice(0, 1));
+    
     tampilPesan(`Mode edit aktif — ${metaSeksi[seksiAktif].label}`, "info");
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -235,16 +277,24 @@ export default function DashboardAdmin() {
     if (res.ok) muatSeksi(token, seksiAktif);
   };
 
-  const batalEdit = () => { setEditingId(null); setForm({}); setPesan(null); };
+  const batalEdit = () => { setEditingId(null); setForm({}); setPesan(null); setDaftarGambar([]); setDaftarVideo([]); };
 
-  const uploadGambar = async (file: File) => {
+  const uploadGambar = async (file: File, fileType: "image" | "video" = "image") => {
     if (!token) {
       tampilPesan("Sesi admin tidak ditemukan.", "error");
       return null;
     }
 
-    if (!file.type.startsWith("image/")) {
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+
+    if (fileType === "image" && !isImage) {
       tampilPesan("File harus berupa gambar.", "error");
+      return null;
+    }
+
+    if (fileType === "video" && !isVideo) {
+      tampilPesan("File harus berupa video.", "error");
       return null;
     }
 
@@ -252,9 +302,10 @@ export default function DashboardAdmin() {
     const body = new FormData();
     body.append("file", file);
     body.append("folder", targetFolder);
+    body.append("fileType", fileType);
 
     try {
-      setUnggahField("image");
+      setUnggahField(fileType);
       const res = await fetch("/api/admin/upload-image", {
         method: "POST",
         headers: { "x-admin-token": token },
@@ -263,45 +314,55 @@ export default function DashboardAdmin() {
       const json = await res.json();
 
       if (!res.ok || !json.path) {
-        tampilPesan(json.message || "Gagal mengunggah gambar.", "error");
+        tampilPesan(json.message || `Gagal mengunggah ${fileType}.`, "error");
         return null;
       }
 
-      setForm((prev) => ({ ...prev, image: json.path }));
-      tampilPesan("Gambar berhasil diunggah.", "sukses");
       return json.path as string;
     } catch {
-      tampilPesan("Terjadi kesalahan saat mengunggah gambar.", "error");
+      tampilPesan(`Terjadi kesalahan saat mengunggah ${fileType}.`, "error");
       return null;
     } finally {
       setUnggahField(null);
-      setDragFieldAktif(null);
     }
   };
 
-  const handleDropGambar = async (
-    e: DragEvent<HTMLDivElement>,
-    field: string,
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragFieldAktif(null);
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    if (field !== "image") return;
-    await uploadGambar(file);
+  const handleTambahGambar = async (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newPaths: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const path = await uploadGambar(file, "image");
+      if (path) newPaths.push(path);
+    }
+
+    if (newPaths.length > 0) {
+      setDaftarGambar((prev) => [...prev, ...newPaths]);
+      tampilPesan(`${newPaths.length} gambar berhasil diunggah.`, "sukses");
+    }
+    e.target.value = "";
   };
 
-  const pilihFileGambar = (field: string) => {
-    if (field !== "image") return;
-    fileInputRef.current?.click();
-  };
-
-  const handlePilihGambar = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleTambahVideo = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    await uploadGambar(file);
+
+    const path = await uploadGambar(file, "video");
+    if (path) {
+      setDaftarVideo([path]);
+      tampilPesan("Video berhasil diunggah.", "sukses");
+    }
     e.target.value = "";
+  };
+
+  const handleHapusGambar = (index: number) => {
+    setDaftarGambar((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleHapusVideo = () => {
+    setDaftarVideo([]);
   };
 
   /* ── RENDER BARIS TABEL ── */
@@ -504,9 +565,7 @@ export default function DashboardAdmin() {
                 const isAktif = form[field] === "1" || form[field] === "true" || form[field] === true;
                 const nilaiKategori = String(form[field] ?? "");
                 const butuhOpsiKategoriSaatEdit = isKategoriField && nilaiKategori && nilaiKategori !== "__new__" && !opsiKategori.includes(nilaiKategori);
-                const nilaiImage = String(form[field] ?? "");
                 const sedangUnggahFieldIni = unggahField === field;
-                const dragAktifFieldIni = dragFieldAktif === field;
 
                 return (
                   <div key={field} className={`flex flex-col gap-1.5 ${isTextarea ? "sm:col-span-2 xl:col-span-3" : ""}`}>
@@ -553,64 +612,85 @@ export default function DashboardAdmin() {
                         )}
                       </div>
                     ) : isImageField ? (
-                      <div className="space-y-2">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePilihGambar}
-                          className="hidden"
-                        />
-
-                        <div
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            if (!dragAktifFieldIni) setDragFieldAktif(field);
-                          }}
-                          onDragLeave={(e) => {
-                            e.preventDefault();
-                            setDragFieldAktif(null);
-                          }}
-                          onDrop={(e) => handleDropGambar(e, field)}
-                          className={`rounded-xl border-2 border-dashed px-4 py-5 transition-all ${
-                            dragAktifFieldIni
-                              ? "border-indigo-400 bg-indigo-50"
-                              : "border-slate-300 bg-slate-50"
-                          }`}
-                        >
-                          <div className="flex flex-col items-center text-center gap-2">
-                            {sedangUnggahFieldIni ? (
-                              <Upload className="w-5 h-5 text-indigo-500 animate-bounce" />
-                            ) : (
-                              <ImagePlus className="w-5 h-5 text-indigo-500" />
-                            )}
-                            <p className="text-xs text-slate-600 font-medium">
-                              {sedangUnggahFieldIni
-                                ? "Sedang mengunggah gambar..."
-                                : "Drag & drop gambar di sini, atau klik pilih file"}
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => pilihFileGambar(field)}
-                              className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                              <Upload className="w-3.5 h-3.5" /> Pilih Gambar
-                            </button>
-                          </div>
+                      <div className="space-y-3 sm:col-span-2 xl:col-span-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-xs font-semibold text-slate-700">Media Proyek</p>
+                          <p className="text-[11px] text-slate-500">Foto: {daftarGambar.length} • Video: {daftarVideo.length}/1</p>
                         </div>
 
                         <input
-                          value={nilaiImage}
-                          onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
-                          placeholder="Atau masukkan path gambar manual..."
-                          className="h-10 w-full border border-slate-200 rounded-xl px-3.5 text-sm text-slate-800 placeholder-slate-400 bg-white hover:border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all duration-200"
+                          ref={multiImageInputRef}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleTambahGambar}
+                          className="hidden"
+                        />
+                        <input
+                          ref={videoInputRef}
+                          type="file"
+                          accept="video/*"
+                          onChange={handleTambahVideo}
+                          className="hidden"
+                          disabled={daftarVideo.length > 0}
                         />
 
-                        {nilaiImage && (
-                          <div className="text-[11px] text-slate-500 break-all">
-                            Path aktif: <span className="font-medium text-slate-700">{nilaiImage}</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => multiImageInputRef.current?.click()}
+                            disabled={unggahField === "image"}
+                            className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 text-white text-xs font-semibold px-3 py-2.5 rounded-lg transition-all"
+                          >
+                            <Upload className="w-4 h-4" />
+                            {unggahField === "image" ? "Mengunggah Foto..." : "Tambah Foto"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => videoInputRef.current?.click()}
+                            disabled={unggahField === "video" || daftarVideo.length > 0}
+                            className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 disabled:opacity-50 text-white text-xs font-semibold px-3 py-2.5 rounded-lg transition-all"
+                          >
+                            <Upload className="w-4 h-4" />
+                            {unggahField === "video" ? "Mengunggah Video..." : daftarVideo.length > 0 ? "Video Sudah Ada" : "Tambah Video"}
+                          </button>
+                        </div>
+
+                        {daftarGambar.length > 0 && (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {daftarGambar.map((path, idx) => (
+                              <div key={idx} className="relative group">
+                                <div className="aspect-square bg-white rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center p-2">
+                                  <img src={path} alt={`Gambar ${idx + 1}`} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = "/images/portfolio/default.svg"; }} />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleHapusGambar(idx)}
+                                  className="absolute inset-0 bg-slate-900/60 rounded-lg items-center justify-center gap-1 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 group-hover:flex transition-opacity"
+                                >
+                                  <Trash2 className="w-4 h-4" /> Hapus
+                                </button>
+                              </div>
+                            ))}
                           </div>
                         )}
+
+                        {daftarVideo.length > 0 && (
+                          <div className="relative group">
+                            <div className="aspect-video bg-slate-900 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center">
+                              <video src={daftarVideo[0]} className="w-full h-full object-contain" controls />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleHapusVideo}
+                              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded transition-colors inline-flex items-center gap-1"
+                            >
+                              <Trash2 className="w-3 h-3" /> Hapus
+                            </button>
+                          </div>
+                        )}
+
+                        <p className="text-[11px] text-slate-500">Upload media dalam 1 form: bisa banyak foto dan maksimal 1 video.</p>
                       </div>
                     ) : isTextarea ? (
                       <textarea
@@ -644,7 +724,7 @@ export default function DashboardAdmin() {
                   <X className="w-4 h-4" /> Batal
                 </button>
               )}
-              <button onClick={() => { setForm({}); setKategoriBaru(""); }} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-medium text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 transition-all duration-200 ml-auto sm:ml-0">
+              <button onClick={() => { setForm({}); setKategoriBaru(""); setDaftarGambar([]); setDaftarVideo([]); }} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-medium text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 transition-all duration-200 ml-auto sm:ml-0">
                 <Eraser className="w-4 h-4" /> Bersihkan
               </button>
             </div>

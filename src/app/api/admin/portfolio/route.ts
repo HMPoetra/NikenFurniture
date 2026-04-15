@@ -15,6 +15,11 @@ function requireAuth(req: NextRequest) {
   }
 }
 
+function isMissingMediaColumnError(error: unknown): boolean {
+  const message = String((error as any)?.message || "").toLowerCase();
+  return message.includes("column") && (message.includes("images") || message.includes("videos"));
+}
+
 export async function GET() {
   try {
     const { data, error } = await supabase
@@ -37,10 +42,10 @@ export async function POST(req: NextRequest) {
   try {
     requireAuth(req);
     const body = await req.json();
-    const { category, title, location, year, image, description, urutan, aktif } = body;
+    const { category, title, location, year, image, description, urutan, aktif, images, videos } = body;
     const finalPath = resolveImagePath(image);
 
-    const { error } = await supabase.from("portfolio_items").insert({
+    const payload = {
       category,
       title,
       location,
@@ -49,7 +54,16 @@ export async function POST(req: NextRequest) {
       description: description || "",
       urutan: Number(urutan) || 0,
       aktif: aktif ? true : false,
-    });
+      images: images || null,
+      videos: videos || null,
+    };
+
+    let { error } = await supabase.from("portfolio_items").insert(payload);
+    if (error && isMissingMediaColumnError(error)) {
+      const { images: _images, videos: _videos, ...legacyPayload } = payload;
+      const fallback = await supabase.from("portfolio_items").insert(legacyPayload);
+      error = fallback.error;
+    }
     if (error) throw error;
     return NextResponse.json({ success: true, message: "Berhasil ditambah" });
   } catch (error: any) {
@@ -95,12 +109,10 @@ export async function PUT(req: NextRequest) {
         { status: 400 }
       );
     const body = await req.json();
-    const { category, title, location, year, image, description, urutan, aktif } = body;
+    const { category, title, location, year, image, description, urutan, aktif, images, videos } = body;
     const finalPath = resolveImagePath(image);
 
-    const { error } = await supabase
-      .from("portfolio_items")
-      .update({
+    const payload = {
         category,
         title,
         location,
@@ -109,8 +121,24 @@ export async function PUT(req: NextRequest) {
         description: description || "",
         urutan: Number(urutan) || 0,
         aktif: aktif ? true : false,
-      })
+        images: images || null,
+        videos: videos || null,
+      };
+
+    let { error } = await supabase
+      .from("portfolio_items")
+      .update(payload)
       .eq("id", id);
+
+    if (error && isMissingMediaColumnError(error)) {
+      const { images: _images, videos: _videos, ...legacyPayload } = payload;
+      const fallback = await supabase
+        .from("portfolio_items")
+        .update(legacyPayload)
+        .eq("id", id);
+      error = fallback.error;
+    }
+
     if (error) throw error;
     return NextResponse.json({ success: true, message: "Berhasil diupdate" });
   } catch (error: any) {
