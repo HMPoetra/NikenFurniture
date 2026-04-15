@@ -1,0 +1,348 @@
+@import "tailwindcss";
+
+@theme {
+    /* Mengubah semua primary ke warna #00366B */
+    --color-primary-400: #1e538a;
+    --color-primary-500: #00366B;
+    /* Warna utama Anda */
+    --color-primary-600: #002d5a;
+    --color-primary-700: #002449;
+    --color-secondary-500: #14b8a6;
+    --color-secondary-600: #0d9488;
+    --color-accent-500: #f59e0b;
+    --color-accent-600: #ea580c;
+    --color-dark: #111827;
+    --font-heading: "Playfair Display", serif;
+    --font-body: "Raleway", sans-serif;
+}
+
+:root {
+    --font-playfair: "Playfair Display", serif;
+    --font-raleway: "Raleway", sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-raleway), sans-serif;
+    color: #111827;
+    overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════════
+    BACKGROUND ANIMATION KEYFRAMES
+   ═══════════════════════════════════════════════ */
+
+/* Organic blob shape morphing */
+@keyframes blobMorph {
+
+    0%,
+    100% {
+        border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    }
+
+    25% {
+        border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+    }
+
+    50% {
+        border-radius: 50% 60% 30% 70% / 40% 30% 70% 60%;
+    }
+
+    75% {
+        border-radius: 70% 30% 50% 60% / 30% 70% 40% 60%;
+    }
+}
+
+/* Gentle vertical float A (goes up) */
+@keyframes floatA {
+
+    0%,
+    100% {
+        transform: translateY(0px) scale(1);
+    }
+
+    50% {
+        transform: translateY(-20px) scale(1.04);
+    }
+}
+
+/* Gentle vertical float B (goes down) */
+@keyframes floatB {
+
+    0%,
+    100% {
+        transform: translateY(0px) scale(1);
+    }
+
+    50% {
+        transform: translateY(16px) scale(0.97);
+    }
+}
+
+/* Diagonal float */
+@keyframes floatDiag {
+
+    0%,
+    100% {
+        transform: translate(0px, 0px) scale(1);
+    }
+
+    33% {
+        transform: translate(12px, -14px) scale(1.03);
+    }
+
+    66% {
+        transform: translate(-8px, 10px) scale(0.98);
+    }
+}
+
+/* Slow rotation */
+@keyframes spinSlow {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Counter-clockwise slow rotation */
+@keyframes spinSlowCCW {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(-360deg);
+    }
+}
+
+/* Gradient position drift */
+@keyframes gradientDrift {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* Subtle opacity pulse */
+@keyframes softPulse {
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* Shimmer shine */
+@keyframes shimmer {
+    0% {
+        background-position: -200% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
+}
+
+/* Scroll indicator bounce */
+@keyframes bounceDot {
+
+    0%,
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    50% {
+        transform: translateY(6px);
+        opacity: 0.4;
+    }
+}
+
+/* Legacy float (kept for compatibility) */
+@keyframes floatY {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+/* ═══════════════════════════════════════════════
+    ANIMATION UTILITY CLASSES
+   ═══════════════════════════════════════════════ */
+
+@layer utilities {
+
+    /* ── Blob / Orb ── */
+    .blob-morph {
+        animation: blobMorph 12s ease-in-out infinite;
+    }
+
+    .float-a {
+        animation: floatA 7s ease-in-out infinite;
+    }
+
+    .float-b {
+        animation: floatB 9s ease-in-out infinite;
+    }
+
+    .float-c {
+        animation: floatA 11s ease-in-out infinite 1.5s;
+    }
+
+    .float-diag {
+        animation: floatDiag 13s ease-in-out infinite;
+    }
+
+    /* ── Rotation ── */
+    .spin-slow {
+        animation: spinSlow 22s linear infinite;
+    }
+
+    .spin-slow-ccw {
+        animation: spinSlowCCW 18s linear infinite;
+    }
+
+    /* ── Gradient ── */
+    .bg-animated {
+        background-size: 250% 250%;
+        animation: gradientDrift 14s ease infinite;
+    }
+
+    /* ── Pulse / Shimmer ── */
+    .pulse-soft {
+        animation: softPulse 4s ease-in-out infinite;
+    }
+
+    .shimmer-fx {
+        background: linear-gradient(105deg,
+                transparent 40%,
+                rgba(255, 255, 255, 0.4) 50%,
+                transparent 60%);
+        background-size: 200% 100%;
+        animation: shimmer 2.4s infinite;
+    }
+
+    /* ── Scroll indicator ── */
+    .bounce-dot {
+        animation: bounceDot 1.6s ease-in-out infinite;
+    }
+
+    /* ── Legacy ── */
+    .animate-float {
+        animation: floatY 6s ease-in-out infinite;
+    }
+
+    /* ── Color helpers ── */
+    .bg-dark {
+        background-color: #eef2ff;
+    }
+
+    .bg-dark-800 {
+        background-color: #eef2ff;
+    }
+
+    .bg-cream {
+        background-color: #fff9ed;
+    }
+
+    .bg-cream-dark {
+        background-color: #f8fafc;
+    }
+
+    .text-cream {
+        color: #0f172a;
+    }
+
+    .text-dark {
+        color: #0f172a;
+    }
+
+    .border-cream {
+        border-color: #e2e8f0;
+    }
+
+    .border-dark {
+        border-color: #cbd5e1;
+    }
+}
+
+/* ═══════════════════════════════════════════════
+    COMPONENT CLASSES
+   ═══════════════════════════════════════════════ */
+
+@layer components {
+    .btn-primary {
+        @apply bg-primary-600 text-white px-8 py-3 rounded-none font-semibold tracking-wider uppercase text-sm hover:bg-primary-700 active:scale-[0.98] transition-all duration-300 border-2 border-primary-600 hover:border-primary-700;
+    }
+
+    .btn-outline {
+        @apply bg-transparent text-primary-600 px-8 py-3 rounded-none font-semibold tracking-wider uppercase text-sm border-2 border-primary-600 hover:bg-primary-600 hover:text-white active:scale-[0.98] transition-all duration-300;
+    }
+
+    .section-title {
+        @apply text-4xl md:text-5xl font-bold text-dark leading-tight;
+        font-family: var(--font-playfair), serif;
+    }
+
+    .section-subtitle {
+        @apply text-primary-500 uppercase tracking-[0.3em] text-sm font-semibold;
+    }
+
+    /* Card with animated left border */
+    .value-card {
+        @apply bg-white/90 p-5 rounded-xl shadow-sm border-l-4 border-primary-500 hover:border-secondary-500 hover:-translate-y-1 transition-all duration-300 cursor-default;
+    }
+}
+
+/* ═══════════════════════════════════════════════
+    SCROLLBAR
+   ═══════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #A98B76;
+    border-radius: 99px;
+}
+
+/* ═══════════════════════════════════════════════
+    REDUCED MOTION — accessibility & performance
+   ═══════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
