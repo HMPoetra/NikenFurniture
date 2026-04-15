@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "r
 import { useRouter } from "next/navigation";
 import { 
   Users, Building2, Star, Mail, Grid, Wrench, MessageSquare, 
-  LogOut, Save, Plus, X, Trash2, Edit3, Eraser, Upload, ImagePlus
+  LogOut, Save, Plus, X, Trash2, Edit3, Eraser, Upload, ImagePlus, PanelLeft
 } from "lucide-react";
 
 const ADMIN_TOKEN_KEY = "admin_token";
@@ -93,6 +93,7 @@ export default function DashboardAdmin() {
   const [unggahField, setUnggahField] = useState<string | null>(null);
   const [dragFieldAktif, setDragFieldAktif] = useState<string | null>(null);
   const [editingId, setEditingId]     = useState<number | string | null>(null);
+  const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
   const formRef                       = useRef<HTMLDivElement>(null);
   const fileInputRef                  = useRef<HTMLInputElement | null>(null);
   const pesanTimer                    = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -116,6 +117,7 @@ export default function DashboardAdmin() {
     setForm({});
     setKategoriBaru("");
     setEditingId(null);
+    setSidebarMobileOpen(false);
     setPesan(null);
   }, [seksiAktif, token]);
 
@@ -356,6 +358,38 @@ export default function DashboardAdmin() {
     info:   "bg-indigo-50 border-indigo-300 text-indigo-800",
   };
 
+  const renderSidebarMenu = () => (
+    <div className="rounded-2xl overflow-hidden shadow-lg border border-white/60" style={{ background: "linear-gradient(160deg,#4f46e5 0%,#7c3aed 100%)" }}>
+      <div className="px-4 py-4 border-b border-white/10">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Menu Pengelolaan</p>
+      </div>
+      <nav className="p-2.5 space-y-1">
+        {seksiMenu.map((sec) => {
+          const aktif = seksiAktif === sec.id;
+          const IconComponent = sec.ikon;
+          return (
+            <button
+              key={sec.id}
+              onClick={() => {
+                setSeksiAktif(sec.id);
+                setSidebarMobileOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-left ${
+                aktif
+                  ? "bg-white text-indigo-700 shadow-md"
+                  : "text-indigo-100 hover:bg-white/15 hover:text-white"
+              }`}
+            >
+              <IconComponent className={`w-4 h-4 ${aktif ? "text-indigo-600" : "text-indigo-300"}`} />
+              {sec.judul}
+              {aktif && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500"></span>}
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+
   /* ─────────────────────────────────── RENDER ─────────────────────────────── */
   return (
     <div className="min-h-screen font-sans" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 40%, #f5f3ff 100%)" }}>
@@ -371,6 +405,13 @@ export default function DashboardAdmin() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSidebarMobileOpen(true)}
+              className="lg:hidden inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg border border-indigo-200 transition-colors"
+            >
+              <PanelLeft className="w-3.5 h-3.5" /> Menu
+            </button>
             <span className="hidden md:flex items-center gap-1.5 text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Sesi aktif
@@ -382,36 +423,37 @@ export default function DashboardAdmin() {
         </div>
       </header>
 
+      {sidebarMobileOpen && (
+        <>
+          <div
+            className="lg:hidden fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[1px]"
+            onClick={() => setSidebarMobileOpen(false)}
+          />
+          <aside className="lg:hidden fixed top-0 left-0 z-50 h-full w-[86vw] max-w-[320px] p-4 bg-white shadow-2xl border-r border-slate-200 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-xs font-black tracking-wide text-slate-700 uppercase">Sidebar Menu</p>
+                <p className="text-[11px] text-slate-500">Pilih menu pengelolaan data</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSidebarMobileOpen(false)}
+                className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:bg-slate-100"
+                aria-label="Tutup sidebar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {renderSidebarMenu()}
+          </aside>
+        </>
+      )}
+
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-5">
 
         {/* ── SIDEBAR ── */}
-        <aside className="lg:sticky lg:top-20 h-fit">
-          <div className="rounded-2xl overflow-hidden shadow-lg border border-white/60" style={{ background: "linear-gradient(160deg,#4f46e5 0%,#7c3aed 100%)" }}>
-            <div className="px-4 py-4 border-b border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Menu Pengelolaan</p>
-            </div>
-            <nav className="p-2.5 space-y-1">
-              {seksiMenu.map((sec) => {
-                const aktif = seksiAktif === sec.id;
-                const IconComponent = sec.ikon;
-                return (
-                  <button
-                    key={sec.id}
-                    onClick={() => setSeksiAktif(sec.id)}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-left ${
-                      aktif
-                        ? "bg-white text-indigo-700 shadow-md"
-                        : "text-indigo-100 hover:bg-white/15 hover:text-white"
-                    }`}
-                  >
-                    <IconComponent className={`w-4 h-4 ${aktif ? "text-indigo-600" : "text-indigo-300"}`} />
-                    {sec.judul}
-                    {aktif && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500"></span>}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
+        <aside className="hidden lg:block lg:sticky lg:top-20 h-fit">
+          {renderSidebarMenu()}
         </aside>
 
         {/* ── KONTEN UTAMA ── */}
