@@ -200,6 +200,16 @@ export default function Navbar({ company }: NavbarProps) {
                   Chat WhatsApp
                 </a>
               </motion.li>
+              <motion.li variants={mobileItemVariants}>
+                <Link
+                  href="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-none border-2 border-slate-300 text-slate-700 hover:text-primary-600 hover:border-primary-600 transition-colors duration-300 text-sm font-semibold uppercase tracking-wider"
+                >
+                  <UserCircleIcon className="h-5 w-5" />
+                  Login Admin
+                </Link>
+              </motion.li>
             </motion.ul>
           </motion.div>
         )}
