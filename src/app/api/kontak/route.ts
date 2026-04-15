@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import supabase from "@/lib/db";
+import { encryptText } from "@/lib/secure-data";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,13 +13,13 @@ export async function POST(req: NextRequest) {
       );
     }
     const { error } = await supabase.from("pesan_kontak").insert({
-      nama,
-      telepon,
-      email: email || null,
-      layanan,
-      lokasi: lokasi || null,
-      budget: budget || null,
-      pesan,
+      nama: encryptText(nama),
+      telepon: encryptText(telepon),
+      email: encryptText(email || null),
+      layanan: encryptText(layanan),
+      lokasi: encryptText(lokasi || null),
+      budget: encryptText(budget || null),
+      pesan: encryptText(pesan),
     });
     if (error) throw error;
     return NextResponse.json({ success: true, message: "Pesan terkirim" });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import supabase from "@/lib/db";
+import { decryptText } from "@/lib/secure-data";
 
 function requireAuth(req: NextRequest) {
   const token = req.headers.get("x-admin-token");
@@ -15,7 +16,19 @@ export async function GET(req: NextRequest) {
       .select("*")
       .order("id", { ascending: false });
     if (error) throw error;
-    return NextResponse.json({ success: true, data });
+
+    const decrypted = (data || []).map((item) => ({
+      ...item,
+      nama: decryptText(item.nama),
+      telepon: decryptText(item.telepon),
+      email: decryptText(item.email),
+      layanan: decryptText(item.layanan),
+      lokasi: decryptText(item.lokasi),
+      budget: decryptText(item.budget),
+      pesan: decryptText(item.pesan),
+    }));
+
+    return NextResponse.json({ success: true, data: decrypted });
   } catch {
     return NextResponse.json(
       { success: false, message: "Unauthorized" },
