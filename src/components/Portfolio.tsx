@@ -28,8 +28,8 @@ type PortfolioProps = {
 
 export default function Portfolio({ items }: PortfolioProps) {
   return (
-    <section className="relative py-24 md:py-32 overflow-hidden bg-[#FFFCF7] pt-28 pb-16" id="portofolio">
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+    <section className="relative py-20 md:py-32 overflow-hidden bg-[#FFFCF7] pt-24 sm:pt-28 pb-14 sm:pb-16" id="portofolio">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
 
         {/* Header Section */}
         <motion.div
@@ -59,7 +59,7 @@ export default function Portfolio({ items }: PortfolioProps) {
             href="/portofolio"
             className="shrink-0 group inline-flex items-center justify-center px-8 py-4 rounded-full font-bold text-slate-800 border border-slate-300 bg-white hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all duration-300 shadow-sm"
           >
-            Lihat Semua Proyek
+            Eksplorasi Semua Proyek
             <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
           </Link>
         </motion.div>
@@ -82,7 +82,7 @@ export default function Portfolio({ items }: PortfolioProps) {
                 whileHover={{ y: -10 }}
                 className={`group relative overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-sm transition-all duration-500 hover:shadow-2xl hover:shadow-slate-200 ${index === 0 ? "md:col-span-2 lg:col-span-2" : ""}`}
               >
-                <div className={`relative w-full overflow-hidden ${index === 0 ? "h-[400px] md:h-[500px]" : "h-[450px]"}`}>
+                <div className={`relative w-full overflow-hidden ${index === 0 ? "h-[280px] sm:h-[360px] md:h-[500px]" : "h-[320px] sm:h-[390px] lg:h-[450px]"}`}>
                   <Image
                     src={imagePath}
                     alt={item.title}
@@ -96,7 +96,7 @@ export default function Portfolio({ items }: PortfolioProps) {
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent opacity-70 group-hover:opacity-85 transition-opacity duration-500" />
 
                   {/* Content Over Image */}
-                  <div className="absolute bottom-0 left-0 right-0 p-8 z-10 flex flex-col justify-end h-full">
+                  <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 md:p-8 z-10 flex flex-col justify-end h-full">
                     <div className="transform transition-all duration-500 group-hover:-translate-y-4">
                       <div className="flex items-center gap-3 mb-4 flex-wrap">
                         <span className="bg-white/20 backdrop-blur-md border border-white/30 text-white text-[10px] px-3 py-1 font-black uppercase tracking-widest rounded-full">
@@ -112,7 +112,7 @@ export default function Portfolio({ items }: PortfolioProps) {
                         )}
                       </div>
 
-                      <h3 className="font-heading text-white font-bold text-2xl md:text-3xl leading-tight mb-3">
+                      <h3 className="font-heading text-white font-bold text-xl sm:text-2xl md:text-3xl leading-tight mb-3">
                         {item.title}
                       </h3>
 
@@ -121,10 +121,22 @@ export default function Portfolio({ items }: PortfolioProps) {
                       </p>
                     </div>
 
+                    <Link
+                      href={`/portofolio/${item.id}`}
+                      className="inline-flex items-center gap-2 mt-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-white/90 transition-colors hover:text-white"
+                    >
+                      Lihat Detail Proyek
+                      <ArrowUpRight className="w-4 h-4" />
+                    </Link>
+
                     {/* Floating Button inside card */}
-                    <div className="absolute bottom-8 right-8 w-12 h-12 rounded-full border border-white/30 bg-white/10 backdrop-blur-md flex items-center justify-center text-white opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500 hover:bg-primary-600 hover:border-primary-600">
+                    <Link
+                      href={`/portofolio/${item.id}`}
+                      aria-label={`Lihat detail proyek ${item.title}`}
+                      className="absolute bottom-5 right-5 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 w-11 h-11 md:w-12 md:h-12 rounded-full border border-white/30 bg-white/10 backdrop-blur-md flex items-center justify-center text-white opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500 hover:bg-primary-600 hover:border-primary-600"
+                    >
                       <ArrowUpRight className="w-5 h-5" />
-                    </div>
+                    </Link>
                   </div>
                 </div>
               </motion.article>

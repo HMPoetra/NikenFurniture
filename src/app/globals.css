@@ -23,6 +23,9 @@
 
 html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    font-size: clamp(14px, 0.28vw + 13px, 16px);
 }
 
 body {
@@ -344,5 +347,24 @@ body {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════
+    GLOBAL CONTAINER WIDTH TUNING
+   ═══════════════════════════════════════════════ */
+
+/*
+  Banyak section memakai `max-w-7xl mx-auto`.
+  Override ini membuat layout terasa lebih lebar di desktop,
+  tanpa perlu mengubah class satu per satu di setiap komponen.
+*/
+.max-w-7xl {
+    max-width: min(1440px, calc(100vw - 2rem));
+}
+
+@media (max-width: 640px) {
+    .max-w-7xl {
+        max-width: 100%;
     }
 }

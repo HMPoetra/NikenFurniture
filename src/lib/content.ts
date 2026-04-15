@@ -127,6 +127,17 @@ export async function getPortfolioItems() {
   }));
 }
 
+export async function getPortfolioItemById(id: string | number) {
+  const items = await getPortfolioItems();
+  const targetId = Number(id);
+
+  if (!Number.isFinite(targetId)) {
+    return null;
+  }
+
+  return items.find((item) => item.id === targetId) || null;
+}
+
 export async function getExperiences() {
   const { data, error } = await supabase
     .from("experiences")

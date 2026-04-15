@@ -80,7 +80,7 @@ export default function Navbar({ company }: NavbarProps) {
               {company.name}
             </span>
             <span className="text-primary-600 text-[10px] tracking-[0.4em] uppercase font-body font-medium">
-              Furniture and Interior
+              {company.tagline}
             </span>
           </Link>
         </motion.div>

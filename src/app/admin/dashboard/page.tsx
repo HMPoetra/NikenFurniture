@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Users, Building2, Star, Mail, Grid, Wrench, MessageSquare, 
-  LogOut, Save, Plus, X, Trash2, Edit3, Eraser
+  LogOut, Save, Plus, X, Trash2, Edit3, Eraser, Upload, ImagePlus
 } from "lucide-react";
 
 const ADMIN_TOKEN_KEY = "admin_token";
@@ -40,7 +40,7 @@ const headerTabel: Record<SeksiId, string[]> = {
   experiences:     ["ID", "Tahun", "Judul", "Deskripsi", "Urutan", "Aktif"],
   pesan_kotak:     ["ID", "Nama", "Telepon", "Email", "Layanan", "Lokasi", "Anggaran", "Pesan"],
   portfolio_items: ["ID", "Kategori", "Judul", "Lokasi", "Tahun", "Gambar", "Deskripsi", "Urutan", "Aktif"],
-  services:        ["ID", "Slug", "Kategori", "Judul", "Deskripsi", "Urutan", "Aktif"],
+  services:        ["ID", "Slug", "Kategori", "Judul", "Deskripsi", "Fitur", "Warna", "Gambar", "Urutan", "Aktif"],
   testimonials:    ["ID", "Nama", "Jabatan", "Ulasan", "Rating", "Urutan", "Aktif"],
 };
 
@@ -50,13 +50,13 @@ const kunciTabel: Record<SeksiId, string[]> = {
   experiences:     ["id", "year", "title", "description", "urutan", "aktif"],
   pesan_kotak:     ["id", "nama", "telepon", "email", "layanan", "lokasi", "budget", "pesan"],
   portfolio_items: ["id", "category", "title", "location", "year", "image", "description", "urutan", "aktif"],
-  services:        ["id", "slug", "category", "title", "description", "urutan", "aktif"],
+  services:        ["id", "slug", "category", "title", "description", "features", "color", "image", "urutan", "aktif"],
   testimonials:    ["id", "nama", "role", "text_ulasan", "rating", "urutan", "aktif"],
 };
 
 const fieldSeksi: Record<SeksiId, string[]> = {
   admin_users:     ["username", "password", "role"],
-  company_info:    ["name", "tagline", "description", "address", "phone", "email", "instagram", "founded", "projects", "clients", "team"],
+  company_info:    ["name", "tagline", "description", "address", "phone", "email", "instagram", "facebook", "youtube", "maps_embed", "founded", "projects", "clients", "team"],
   experiences:     ["year", "title", "description", "urutan", "aktif"],
   pesan_kotak:     ["nama", "telepon", "email", "layanan", "lokasi", "budget", "pesan"],
   portfolio_items: ["category", "title", "location", "year", "image", "description", "urutan", "aktif"],
@@ -66,7 +66,7 @@ const fieldSeksi: Record<SeksiId, string[]> = {
 
 const labelField: Record<SeksiId, Record<string, string>> = {
   admin_users:     { username: "Nama Pengguna", password: "Kata Sandi (baru)", role: "Peran (admin / superadmin)" },
-  company_info:    { name: "Nama Perusahaan", tagline: "Tagline", description: "Deskripsi Perusahaan", address: "Alamat Lengkap", phone: "Nomor Telepon", email: "Alamat Email", instagram: "Akun Instagram", founded: "Tahun Berdiri", projects: "Jumlah Proyek", clients: "Jumlah Klien", team: "Jumlah Tim" },
+  company_info:    { name: "Nama Perusahaan", tagline: "Tagline", description: "Deskripsi Perusahaan", address: "Alamat Lengkap", phone: "Nomor Telepon", email: "Alamat Email", instagram: "Akun Instagram", facebook: "Akun Facebook", youtube: "Akun YouTube", maps_embed: "Tautan Embed Maps", founded: "Tahun Berdiri", projects: "Jumlah Proyek", clients: "Jumlah Klien", team: "Jumlah Tim" },
   experiences:     { year: "Tahun", title: "Judul", description: "Deskripsi", urutan: "Urutan Tampil", aktif: "Aktif (true/false)" },
   pesan_kotak:     { nama: "Nama Pengirim", telepon: "Nomor Telepon", email: "Alamat Email", layanan: "Layanan Diminati", lokasi: "Lokasi Proyek", budget: "Estimasi Anggaran", pesan: "Isi Pesan" },
   portfolio_items: { category: "Kategori", title: "Judul Proyek", location: "Lokasi", year: "Tahun", image: "Path Gambar", description: "Deskripsi", urutan: "Urutan Tampil", aktif: "Aktif (true/false)" },
@@ -88,8 +88,13 @@ export default function DashboardAdmin() {
   const [seksiAktif, setSeksiAktif]   = useState<SeksiId>("company_info");
   const [items, setItems]             = useState<any[]>([]);
   const [form, setForm]               = useState<Record<string, any>>({});
+  const [opsiKategori, setOpsiKategori] = useState<string[]>([]);
+  const [kategoriBaru, setKategoriBaru] = useState("");
+  const [unggahField, setUnggahField] = useState<string | null>(null);
+  const [dragFieldAktif, setDragFieldAktif] = useState<string | null>(null);
   const [editingId, setEditingId]     = useState<number | string | null>(null);
   const formRef                       = useRef<HTMLDivElement>(null);
+  const fileInputRef                  = useRef<HTMLInputElement | null>(null);
   const pesanTimer                    = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tampilPesan = (teks: string, tipe: "sukses" | "error" | "info" = "sukses") => {
@@ -109,9 +114,27 @@ export default function DashboardAdmin() {
     if (!token) return;
     muatSeksi(token, seksiAktif);
     setForm({});
+    setKategoriBaru("");
     setEditingId(null);
     setPesan(null);
   }, [seksiAktif, token]);
+
+  useEffect(() => {
+    if (seksiAktif !== "services" && seksiAktif !== "portfolio_items") {
+      setOpsiKategori([]);
+      return;
+    }
+
+    const bawaan = seksiAktif === "services"
+      ? ["Konstruksi", "Renovasi", "Interior", "Desain"]
+      : [];
+
+    const dariData = items
+      .map((item) => String(item?.category ?? "").trim())
+      .filter(Boolean);
+
+    setOpsiKategori([...new Set([...bawaan, ...dariData])]);
+  }, [items, seksiAktif]);
 
   const muatSeksi = async (adminToken: string, seksi: SeksiId) => {
     setMemuat(true);
@@ -141,9 +164,30 @@ export default function DashboardAdmin() {
 
   const simpanItem = async () => {
     if (!token) return;
+
+    if (
+      fieldSeksi[seksiAktif].includes("category") &&
+      form.category === "__new__" &&
+      !kategoriBaru.trim()
+    ) {
+      tampilPesan("Kategori baru wajib diisi.", "error");
+      return;
+    }
+
     const meta = metaSeksi[seksiAktif];
     const body: Record<string, any> = {};
     for (const field of fieldSeksi[seksiAktif]) {
+      if (field === "category") {
+        const kategoriTerpilih =
+          form[field] === "__new__"
+            ? kategoriBaru.trim()
+            : String(form[field] ?? "").trim();
+
+        if (!kategoriTerpilih) continue;
+        body[field] = kategoriTerpilih;
+        continue;
+      }
+
       if (form[field] === undefined || form[field] === "") continue;
       if (field === "features") {
         body[field] = [...new Set((form[field] as string).split(",").map((v: string) => v.trim()).filter(Boolean))];
@@ -164,7 +208,7 @@ export default function DashboardAdmin() {
     });
     const json = await res.json();
     tampilPesan(json.message || (res.ok ? "Berhasil disimpan" : "Gagal menyimpan"), res.ok ? "sukses" : "error");
-    if (res.ok) { muatSeksi(token, seksiAktif); setForm({}); setEditingId(null); }
+    if (res.ok) { muatSeksi(token, seksiAktif); setForm({}); setKategoriBaru(""); setEditingId(null); }
   };
 
   const editItem = (item: any) => {
@@ -190,6 +234,73 @@ export default function DashboardAdmin() {
   };
 
   const batalEdit = () => { setEditingId(null); setForm({}); setPesan(null); };
+
+  const uploadGambar = async (file: File) => {
+    if (!token) {
+      tampilPesan("Sesi admin tidak ditemukan.", "error");
+      return null;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      tampilPesan("File harus berupa gambar.", "error");
+      return null;
+    }
+
+    const targetFolder = seksiAktif === "services" ? "services" : "portfolio";
+    const body = new FormData();
+    body.append("file", file);
+    body.append("folder", targetFolder);
+
+    try {
+      setUnggahField("image");
+      const res = await fetch("/api/admin/upload-image", {
+        method: "POST",
+        headers: { "x-admin-token": token },
+        body,
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json.path) {
+        tampilPesan(json.message || "Gagal mengunggah gambar.", "error");
+        return null;
+      }
+
+      setForm((prev) => ({ ...prev, image: json.path }));
+      tampilPesan("Gambar berhasil diunggah.", "sukses");
+      return json.path as string;
+    } catch {
+      tampilPesan("Terjadi kesalahan saat mengunggah gambar.", "error");
+      return null;
+    } finally {
+      setUnggahField(null);
+      setDragFieldAktif(null);
+    }
+  };
+
+  const handleDropGambar = async (
+    e: DragEvent<HTMLDivElement>,
+    field: string,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragFieldAktif(null);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (field !== "image") return;
+    await uploadGambar(file);
+  };
+
+  const pilihFileGambar = (field: string) => {
+    if (field !== "image") return;
+    fileInputRef.current?.click();
+  };
+
+  const handlePilihGambar = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadGambar(file);
+    e.target.value = "";
+  };
 
   /* ── RENDER BARIS TABEL ── */
   const renderBaris = (item: any, index: number) => {
@@ -346,7 +457,14 @@ export default function DashboardAdmin() {
                 const label = labelField[seksiAktif]?.[field] ?? field.replace(/_/g, " ");
                 const isTextarea = textareaFields.has(field);
                 const isAktifField = field === "aktif";
+                const isKategoriField = field === "category" && (seksiAktif === "services" || seksiAktif === "portfolio_items");
+                const isImageField = field === "image" && (seksiAktif === "services" || seksiAktif === "portfolio_items");
                 const isAktif = form[field] === "1" || form[field] === "true" || form[field] === true;
+                const nilaiKategori = String(form[field] ?? "");
+                const butuhOpsiKategoriSaatEdit = isKategoriField && nilaiKategori && nilaiKategori !== "__new__" && !opsiKategori.includes(nilaiKategori);
+                const nilaiImage = String(form[field] ?? "");
+                const sedangUnggahFieldIni = unggahField === field;
+                const dragAktifFieldIni = dragFieldAktif === field;
 
                 return (
                   <div key={field} className={`flex flex-col gap-1.5 ${isTextarea ? "sm:col-span-2 xl:col-span-3" : ""}`}>
@@ -363,6 +481,94 @@ export default function DashboardAdmin() {
                         <span className={`text-sm font-semibold ${isAktif ? "text-emerald-600" : "text-slate-500"}`}>
                           {isAktif ? "Aktif (ON)" : "Non-aktif (OFF)"}
                         </span>
+                      </div>
+                    ) : isKategoriField ? (
+                      <div className="space-y-2">
+                        <select
+                          value={nilaiKategori}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setForm((p) => ({ ...p, [field]: value }));
+                            if (value !== "__new__") setKategoriBaru("");
+                          }}
+                          className="h-10 w-full border border-slate-200 rounded-xl px-3.5 text-sm text-slate-800 bg-slate-50 hover:border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:bg-white outline-none transition-all duration-200"
+                        >
+                          <option value="">Pilih kategori…</option>
+                          {butuhOpsiKategoriSaatEdit && <option value={nilaiKategori}>{nilaiKategori}</option>}
+                          {opsiKategori.map((kategori) => (
+                            <option key={kategori} value={kategori}>{kategori}</option>
+                          ))}
+                          <option value="__new__">+ Tambah kategori baru</option>
+                        </select>
+
+                        {nilaiKategori === "__new__" && (
+                          <input
+                            value={kategoriBaru}
+                            onChange={(e) => setKategoriBaru(e.target.value)}
+                            placeholder="Tulis nama kategori baru…"
+                            className="h-10 w-full border border-indigo-200 rounded-xl px-3.5 text-sm text-slate-800 placeholder-slate-400 bg-indigo-50/40 hover:border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:bg-white outline-none transition-all duration-200"
+                          />
+                        )}
+                      </div>
+                    ) : isImageField ? (
+                      <div className="space-y-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePilihGambar}
+                          className="hidden"
+                        />
+
+                        <div
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            if (!dragAktifFieldIni) setDragFieldAktif(field);
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            setDragFieldAktif(null);
+                          }}
+                          onDrop={(e) => handleDropGambar(e, field)}
+                          className={`rounded-xl border-2 border-dashed px-4 py-5 transition-all ${
+                            dragAktifFieldIni
+                              ? "border-indigo-400 bg-indigo-50"
+                              : "border-slate-300 bg-slate-50"
+                          }`}
+                        >
+                          <div className="flex flex-col items-center text-center gap-2">
+                            {sedangUnggahFieldIni ? (
+                              <Upload className="w-5 h-5 text-indigo-500 animate-bounce" />
+                            ) : (
+                              <ImagePlus className="w-5 h-5 text-indigo-500" />
+                            )}
+                            <p className="text-xs text-slate-600 font-medium">
+                              {sedangUnggahFieldIni
+                                ? "Sedang mengunggah gambar..."
+                                : "Drag & drop gambar di sini, atau klik pilih file"}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => pilihFileGambar(field)}
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              <Upload className="w-3.5 h-3.5" /> Pilih Gambar
+                            </button>
+                          </div>
+                        </div>
+
+                        <input
+                          value={nilaiImage}
+                          onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
+                          placeholder="Atau masukkan path gambar manual..."
+                          className="h-10 w-full border border-slate-200 rounded-xl px-3.5 text-sm text-slate-800 placeholder-slate-400 bg-white hover:border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all duration-200"
+                        />
+
+                        {nilaiImage && (
+                          <div className="text-[11px] text-slate-500 break-all">
+                            Path aktif: <span className="font-medium text-slate-700">{nilaiImage}</span>
+                          </div>
+                        )}
                       </div>
                     ) : isTextarea ? (
                       <textarea
@@ -396,7 +602,7 @@ export default function DashboardAdmin() {
                   <X className="w-4 h-4" /> Batal
                 </button>
               )}
-              <button onClick={() => setForm({})} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-medium text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 transition-all duration-200 ml-auto sm:ml-0">
+              <button onClick={() => { setForm({}); setKategoriBaru(""); }} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-medium text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 transition-all duration-200 ml-auto sm:ml-0">
                 <Eraser className="w-4 h-4" /> Bersihkan
               </button>
             </div>

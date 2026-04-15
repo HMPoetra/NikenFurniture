@@ -16,6 +16,7 @@ export default async function HomePage() {
       <Services services={data.services} />
       <Portfolio items={data.portfolioItems} />
       <Experience
+        company={data.companyInfo}
         experiences={data.experiences}
         testimonials={data.testimonials}
       />

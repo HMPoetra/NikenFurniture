@@ -10,12 +10,10 @@ import {
   staggerContainer,
   viewport,
 } from "@/lib/animations";
+import type { CompanyInfo } from "@/lib/site";
 
 type AboutProps = {
-  data: {
-    description: string;
-    founded: string;
-  };
+  data: CompanyInfo;
 };
 
 const values = [
@@ -67,7 +65,7 @@ export default function About({ data }: AboutProps) {
             {/* Heading: Ubah text-white ke text-slate-900 */}
             <h2 className="font-heading text-4xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight">
               Lebih dari sekadar desain.<br />
-              <span className="text-primary-700">Kami mengeksekusi visi.</span>
+              <span className="text-primary-700">{data.tagline}</span>
             </h2>
 
             <div className="h-1.5 w-20 bg-primary-600 mb-8 rounded-full" />
@@ -77,7 +75,7 @@ export default function About({ data }: AboutProps) {
               {data.description}
             </p>
             <p className="font-body text-slate-600 leading-relaxed mb-10">
-              Fokus utama kami bukan sekadar menyajikan tampilan render 3D yang memukau, melainkan merealisasikan hunian dan proyek komersial tersebut menjadi karya nyata yang presisi, nyaman digunakan, dan realistis untuk dibangun.
+              {data.name} terus menggabungkan presisi pengerjaan, komunikasi yang rapi, dan kontrol kualitas yang konsisten untuk setiap proyek.
             </p>
 
             <div className="grid sm:grid-cols-2 gap-4 mb-10">

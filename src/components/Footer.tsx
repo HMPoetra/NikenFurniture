@@ -4,10 +4,12 @@ import { motion } from "framer-motion";
 import { fadeUp, staggerContainer, viewport } from "@/lib/animations";
 import type { CompanyInfo } from "@/lib/site";
 import {
+  createFacebookHref,
   createInstagramHref,
   createMailHref,
   createMapsSearchHref,
   createTelHref,
+  createYoutubeHref,
   createWhatsAppHref,
 } from "@/lib/site";
 
@@ -41,6 +43,8 @@ export default function Footer({ company, services }: FooterProps) {
         { label: company.phone, href: createTelHref(company.phone) },
         { label: company.email, href: createMailHref(company.email) },
         { label: company.instagram, href: createInstagramHref(company.instagram) },
+        { label: company.facebook, href: createFacebookHref(company.facebook) },
+        { label: company.youtube, href: createYoutubeHref(company.youtube) },
         {
           label: "Lihat lokasi kami",
           href: createMapsSearchHref(company.address),
@@ -87,12 +91,10 @@ export default function Footer({ company, services }: FooterProps) {
               {company.name}
             </div>
             <div className="text-primary-400 text-[10px] tracking-[0.45em] uppercase font-body mb-5">
-              Furniture and Interior
+              {company.tagline}
             </div>
             <p className="font-body text-sm leading-relaxed text-slate-400 mb-5">
-              Solusi pembangunan, renovasi, dan interior custom untuk hunian dan
-              ruang usaha. Kami bantu dari perencanaan, produksi, sampai serah
-              terima proyek.
+              {company.description}
             </p>
             <div className="flex flex-col gap-3">
               <a

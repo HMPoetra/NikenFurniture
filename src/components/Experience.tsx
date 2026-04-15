@@ -10,6 +10,7 @@ import {
   staggerContainer,
   viewport,
 } from "@/lib/animations";
+import type { CompanyInfo } from "@/lib/site";
 
 type ExperienceProps = {
   experiences: Array<{ year: string; title: string; description: string }>;
@@ -19,12 +20,35 @@ type ExperienceProps = {
     text: string;
     rating: number;
   }>;
+  company?: CompanyInfo;
+};
+
+const fallbackCompany: CompanyInfo = {
+  name: "Niken Furniture",
+  tagline: "Membangun Ruang, Merangkai Mimpi",
+  description:
+    "Niken Furniture adalah perusahaan profesional yang bergerak di bidang furniture custom, kontraktor bangunan, serta desain dan interior untuk hunian dan ruang usaha.",
+  address: "",
+  phone: "",
+  email: "",
+  instagram: "",
+  facebook: "",
+  youtube: "",
+  mapsEmbed: "",
+  founded: "2010",
+  projects: "0",
+  clients: "0",
+  team: "0",
 };
 
 export default function Experience({
   experiences,
   testimonials,
+  company,
 }: ExperienceProps) {
+  const companyData = company ?? fallbackCompany;
+  const yearsActive = Math.max(new Date().getFullYear() - Number(companyData.founded || 0), 0);
+
   return (
     <section className="relative py-24 md:py-32 overflow-hidden bg-[#FDF9F1]" id="pengalaman">
       <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -42,8 +66,11 @@ export default function Experience({
             <span className="text-xs font-bold tracking-widest uppercase">Perjalanan Kami</span>
           </div>
           <h2 className="font-heading text-4xl md:text-5xl font-bold text-slate-900 leading-tight">
-            14 Tahun Membangun Kepercayaan
+            {yearsActive} Tahun Membangun Kepercayaan
           </h2>
+          <p className="mt-4 text-slate-600 leading-relaxed max-w-2xl mx-auto">
+            Sejak {companyData.founded}, {companyData.name} telah menyelesaikan {companyData.projects} proyek untuk {companyData.clients} klien dengan dukungan {companyData.team} anggota tim.
+          </p>
         </motion.div>
 
         {/* ── Timeline Jejak Historis ── */}

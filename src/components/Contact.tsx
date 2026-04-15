@@ -2,12 +2,14 @@
 
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Phone, Mail, Instagram, Send } from "lucide-react";
+import { MapPin, Phone, Mail, Instagram, Send, Facebook, Youtube } from "lucide-react";
 import type { CompanyInfo } from "@/lib/site";
 import {
+  createFacebookHref,
   createInstagramHref,
   createMailHref,
   createMapsSearchHref,
+  createYoutubeHref,
   createWhatsAppHref,
 } from "@/lib/site";
 
@@ -51,7 +53,7 @@ function ContactCard({
   icon: React.ElementType;
 }) {
   const content = (
-    <div className="group flex items-start gap-4 bg-white border border-slate-100 hover:border-primary-200 p-6 transition-all duration-300 rounded-[1.5rem] shadow-sm hover:shadow-md">
+    <div className="group flex h-full items-start gap-4 bg-white border border-slate-100 hover:border-primary-200 p-5 transition-all duration-300 rounded-[1.25rem] shadow-sm hover:shadow-md">
       <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 group-hover:bg-primary-600 group-hover:border-primary-600 transition-all duration-300">
         <Icon className="w-5 h-5 text-primary-600 group-hover:text-white" />
       </div>
@@ -178,7 +180,7 @@ export default function Contact({ data, services }: ContactProps) {
                 <span className="text-xs font-bold tracking-widest uppercase">Hubungi Kami</span>
               </div>
               <h2 className="font-heading text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight mb-4">
-                Langkah pertama menuju <span className="text-primary-600">kolaborasi nyata.</span>
+                Langkah pertama menuju <span className="text-primary-600">{data.tagline.toLowerCase()}.</span>
               </h2>
               <p className="font-body text-slate-600 text-lg leading-relaxed">
                 Form ini cocok untuk kebutuhan estimasi awal, diskusi spesifikasi material,
@@ -226,10 +228,20 @@ export default function Contact({ data, services }: ContactProps) {
             </motion.div>
 
             <div className="space-y-4">
-              <ContactCard title="Alamat Studio" value={data.address} helper="Survey lokasi tersedia sesuai jadwal" href={createMapsSearchHref(data.address)} icon={MapPin} />
-              <ContactCard title="Telepon" value={data.phone} helper="Respon cepat pada jam kerja" href={createWhatsAppHref(data.phone)} icon={Phone} />
-              <ContactCard title="Email Perusahaan" value={data.email} helper="Untuk brief proyek dan dokumen B2B" href={createMailHref(data.email)} icon={Mail} />
-              <ContactCard title="Instagram" value={data.instagram} helper="Lihat progres proyek terbaru" href={createInstagramHref(data.instagram)} icon={Instagram} />
+              <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm">
+                <h4 className="font-heading text-slate-900 font-bold text-lg mb-5 flex items-center gap-2">
+                  <span className="w-1.5 h-6 bg-primary-600 rounded-full" />
+                  Informasi Kontak
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <ContactCard title="Alamat Studio" value={data.address} helper="Survey lokasi tersedia sesuai jadwal" href={createMapsSearchHref(data.address)} icon={MapPin} />
+                  <ContactCard title="Telepon" value={data.phone} helper="Respon cepat pada jam kerja" href={createWhatsAppHref(data.phone)} icon={Phone} />
+                  <ContactCard title="Email Perusahaan" value={data.email} helper="Untuk brief proyek dan dokumen B2B" href={createMailHref(data.email)} icon={Mail} />
+                  <ContactCard title="Instagram" value={data.instagram} helper="Lihat progres proyek terbaru" href={createInstagramHref(data.instagram)} icon={Instagram} />
+                  <ContactCard title="Facebook" value={data.facebook} helper="Pembaruan dan dokumentasi proyek" href={createFacebookHref(data.facebook)} icon={Facebook} />
+                  <ContactCard title="YouTube" value={data.youtube} helper="Konten proses dan hasil kerja" href={createYoutubeHref(data.youtube)} icon={Youtube} />
+                </div>
+              </div>
             </div>
 
             <div className="bg-white border border-slate-100 p-8 rounded-[2rem] shadow-sm">

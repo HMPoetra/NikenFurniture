@@ -1,1 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" fill="none"><rect width="1200" height="900" fill="#E2E8F0"/><rect x="120" y="160" width="960" height="580" rx="32" fill="#334155"/><text x="210" y="430" fill="#FFFFFF" font-size="76" font-family="Arial, sans-serif" font-weight="700">Portfolio Placeholder</text><text x="210" y="520" fill="#CBD5E1" font-size="36" font-family="Arial, sans-serif">Dummy visual digunakan sampai foto proyek final siap.</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Portfolio image placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f2937"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <g fill="none" stroke="#94a3b8" stroke-width="8" opacity="0.35">
+    <rect x="120" y="130" width="960" height="540" rx="24"/>
+    <path d="M180 590l230-240 180 170 150-120 280 190"/>
+    <circle cx="420" cy="300" r="56"/>
+  </g>
+  <text x="600" y="700" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" fill="#e2e8f0" opacity="0.9">Niken Furniture Portfolio</text>
+</svg>
