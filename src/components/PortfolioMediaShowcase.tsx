@@ -17,6 +17,10 @@ type PortfolioMediaShowcaseProps = {
   media: MediaItem[];
 };
 
+function toMediaType(value: unknown): MediaItem["fileType"] {
+  return value === "video" ? "video" : "image";
+}
+
 function MediaPreview({ item, title }: { item: MediaItem; title: string }) {
   if (item.fileType === "video") {
     return (
@@ -40,18 +44,23 @@ function MediaPreview({ item, title }: { item: MediaItem; title: string }) {
 }
 
 export default function PortfolioMediaShowcase({ title, media }: PortfolioMediaShowcaseProps) {
-  const validMedia = useMemo<MediaItem[]>(
-    () =>
-      media
-        .map<MediaItem>((item) => ({
-          id: item.id,
-          url: String(item.url || "").trim(),
-          fileType: item.fileType === "video" ? "video" : "image",
-          fileName: item.fileName || null,
-        }))
-        .filter((item) => Boolean(item.url)),
-    [media],
-  );
+  const validMedia = useMemo(() => {
+    const normalized: MediaItem[] = [];
+
+    for (const item of media) {
+      const url = String(item?.url || "").trim();
+      if (!url) continue;
+
+      normalized.push({
+        id: Number(item?.id) || 0,
+        url,
+        fileType: toMediaType(item?.fileType),
+        fileName: item?.fileName || null,
+      });
+    }
+
+    return normalized;
+  }, [media]);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomIndex, setZoomIndex] = useState<number | null>(null);
