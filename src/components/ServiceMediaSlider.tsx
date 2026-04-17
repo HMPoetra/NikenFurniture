@@ -89,6 +89,7 @@ export default function ServiceMediaSlider({ title, media }: ServiceMediaSliderP
   };
 
   const zoomMedia = zoomIndex === null ? null : validMedia[zoomIndex];
+  const zoomDisplayIndex = zoomIndex === null ? 1 : zoomIndex + 1;
 
   return (
     <div className="rounded-[1.75rem] border border-slate-200 bg-white p-7 shadow-sm">
@@ -232,7 +233,7 @@ export default function ServiceMediaSlider({ title, media }: ServiceMediaSliderP
 
             <div className="flex items-center justify-between gap-4 border-t border-white/10 px-5 py-4 text-white">
               <div>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">Media {zoomIndex + 1}/{validMedia.length}</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">Media {zoomDisplayIndex}/{validMedia.length}</div>
                 <div className="mt-1 text-sm text-white/80 inline-flex items-center gap-1.5">
                   {zoomMedia.mediaType === "video" && <Play className="h-3.5 w-3.5" />}
                   {zoomMedia.mediaType === "video" ? "Video" : "Foto"}

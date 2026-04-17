@@ -95,12 +95,21 @@ function normalizeServiceMediaPath(value: string | null | undefined) {
   return `/images/services/${decoded.replace(/^\/+/, "")}`;
 }
 
-function parseJsonArray(value: string[] | string | null) {
+function parseJsonArray(value: unknown) {
   if (!value) return [];
-  if (Array.isArray(value)) return value.filter(Boolean);
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => String(entry).trim()).filter(Boolean);
+  }
+
+  if (typeof value !== "string") {
+    return [];
+  }
+
   try {
-    const parsed = JSON.parse(value as string);
-    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((entry) => String(entry).trim()).filter(Boolean);
   } catch {
     return [];
   }

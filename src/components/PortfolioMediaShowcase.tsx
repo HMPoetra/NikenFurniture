@@ -40,10 +40,10 @@ function MediaPreview({ item, title }: { item: MediaItem; title: string }) {
 }
 
 export default function PortfolioMediaShowcase({ title, media }: PortfolioMediaShowcaseProps) {
-  const validMedia = useMemo(
+  const validMedia = useMemo<MediaItem[]>(
     () =>
       media
-        .map((item) => ({
+        .map<MediaItem>((item) => ({
           id: item.id,
           url: String(item.url || "").trim(),
           fileType: item.fileType === "video" ? "video" : "image",
@@ -96,6 +96,7 @@ export default function PortfolioMediaShowcase({ title, media }: PortfolioMediaS
 
   const activeMedia = validMedia[activeIndex];
   const zoomMedia = zoomIndex === null ? null : validMedia[zoomIndex];
+  const zoomDisplayIndex = zoomIndex === null ? 1 : zoomIndex + 1;
 
   const prev = () => setActiveIndex((current) => (current - 1 + validMedia.length) % validMedia.length);
   const next = () => setActiveIndex((current) => (current + 1) % validMedia.length);
@@ -229,7 +230,7 @@ export default function PortfolioMediaShowcase({ title, media }: PortfolioMediaS
 
             <div className="flex items-center justify-between gap-4 border-t border-white/10 px-5 py-4 text-white">
               <div>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">Media {zoomIndex + 1}/{validMedia.length}</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">Media {zoomDisplayIndex}/{validMedia.length}</div>
                 <div className="mt-1 text-sm text-white/80">{zoomMedia.fileType === "video" ? "Video" : "Foto"}</div>
               </div>
 
