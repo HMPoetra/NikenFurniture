@@ -39,8 +39,8 @@ const headerTabel: Record<SeksiId, string[]> = {
   company_info:    ["Kunci", "Nilai"],
   experiences:     ["ID", "Tahun", "Judul", "Deskripsi", "Urutan", "Aktif"],
   pesan_kotak:     ["ID", "Nama", "Telepon", "Email", "Layanan", "Lokasi", "Anggaran", "Pesan"],
-  portfolio_items: ["ID", "Kategori", "Judul", "Lokasi", "Tahun", "Gambar", "Deskripsi", "Urutan", "Aktif"],
-  services:        ["ID", "Slug", "Kategori", "Judul", "Deskripsi", "Fitur", "Warna", "Gambar", "Urutan", "Aktif"],
+  portfolio_items: ["ID", "Kategori", "Judul", "Lokasi", "Tahun", "Media", "Deskripsi", "Urutan", "Aktif"],
+  services:        ["ID", "Slug", "Kategori", "Judul", "Deskripsi", "Fitur", "Warna", "Media", "Urutan", "Aktif"],
   testimonials:    ["ID", "Nama", "Jabatan", "Ulasan", "Rating", "Urutan", "Aktif"],
 };
 
@@ -49,8 +49,8 @@ const kunciTabel: Record<SeksiId, string[]> = {
   company_info:    ["key", "value"],
   experiences:     ["id", "year", "title", "description", "urutan", "aktif"],
   pesan_kotak:     ["id", "nama", "telepon", "email", "layanan", "lokasi", "budget", "pesan"],
-  portfolio_items: ["id", "category", "title", "location", "year", "image", "description", "urutan", "aktif"],
-  services:        ["id", "slug", "category", "title", "description", "features", "color", "image", "urutan", "aktif"],
+  portfolio_items: ["id", "category", "title", "location", "year", "media", "description", "urutan", "aktif"],
+  services:        ["id", "slug", "category", "title", "description", "features", "color", "media", "urutan", "aktif"],
   testimonials:    ["id", "nama", "role", "text_ulasan", "rating", "urutan", "aktif"],
 };
 
@@ -59,8 +59,8 @@ const fieldSeksi: Record<SeksiId, string[]> = {
   company_info:    ["name", "tagline", "description", "address", "phone", "email", "instagram", "facebook", "youtube", "maps_embed", "founded", "projects", "clients", "team"],
   experiences:     ["year", "title", "description", "urutan", "aktif"],
   pesan_kotak:     ["nama", "telepon", "email", "layanan", "lokasi", "budget", "pesan"],
-  portfolio_items: ["category", "title", "location", "year", "image", "description", "urutan", "aktif"],
-  services:        ["slug", "category", "title", "description", "features", "color", "image", "urutan", "aktif"],
+  portfolio_items: ["category", "title", "location", "year", "description", "urutan", "aktif"],
+  services:        ["slug", "category", "title", "description", "features", "color", "urutan", "aktif"],
   testimonials:    ["nama", "role", "text_ulasan", "rating", "urutan", "aktif"],
 };
 
@@ -69,8 +69,8 @@ const labelField: Record<SeksiId, Record<string, string>> = {
   company_info:    { name: "Nama Perusahaan", tagline: "Tagline", description: "Deskripsi Perusahaan", address: "Alamat Lengkap", phone: "Nomor Telepon", email: "Alamat Email", instagram: "Akun Instagram", facebook: "Akun Facebook", youtube: "Akun YouTube", maps_embed: "Tautan Embed Maps", founded: "Tahun Berdiri", projects: "Jumlah Proyek", clients: "Jumlah Klien", team: "Jumlah Tim" },
   experiences:     { year: "Tahun", title: "Judul", description: "Deskripsi", urutan: "Urutan Tampil", aktif: "Aktif (true/false)" },
   pesan_kotak:     { nama: "Nama Pengirim", telepon: "Nomor Telepon", email: "Alamat Email", layanan: "Layanan Diminati", lokasi: "Lokasi Proyek", budget: "Estimasi Anggaran", pesan: "Isi Pesan" },
-  portfolio_items: { category: "Kategori", title: "Judul Proyek", location: "Lokasi", year: "Tahun", image: "Path Gambar", description: "Deskripsi", urutan: "Urutan Tampil", aktif: "Aktif (true/false)" },
-  services:        { slug: "Slug URL", category: "Kategori", title: "Judul Layanan", description: "Deskripsi", features: "Fitur (pisah koma)", color: "Kelas Warna Tailwind", image: "Path Gambar", urutan: "Urutan Tampil", aktif: "Aktif (true/false)" },
+  portfolio_items: { category: "Kategori", title: "Judul Proyek", location: "Lokasi", year: "Tahun", description: "Deskripsi", urutan: "Urutan Tampil", aktif: "Aktif (true/false)" },
+  services:        { slug: "Slug URL", category: "Kategori", title: "Judul Layanan", description: "Deskripsi", features: "Fitur (pisah koma)", color: "Kelas Warna Tailwind", urutan: "Urutan Tampil", aktif: "Aktif (true/false)" },
   testimonials:    { nama: "Nama Pelanggan", role: "Jabatan / Kota", text_ulasan: "Isi Ulasan", rating: "Rating (1–5)", urutan: "Urutan Tampil", aktif: "Aktif (true/false)" },
 };
 
@@ -95,15 +95,57 @@ export default function DashboardAdmin() {
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
   const [daftarGambar, setDaftarGambar] = useState<string[]>([]);
   const [daftarVideo, setDaftarVideo] = useState<string[]>([]);
+  const [mediaLayanan, setMediaLayanan] = useState<Array<{
+    key: string;
+    id?: number;
+    fileType: "image" | "video";
+    previewUrl: string;
+    fileName: string;
+    file?: File;
+  }>>([]);
+  const [mediaPortofolio, setMediaPortofolio] = useState<Array<{
+    key: string;
+    id?: number;
+    fileType: "image" | "video";
+    previewUrl: string;
+    fileName: string;
+    file?: File;
+  }>>([]);
   const formRef                       = useRef<HTMLDivElement>(null);
   const multiImageInputRef            = useRef<HTMLInputElement | null>(null);
   const videoInputRef                 = useRef<HTMLInputElement | null>(null);
+  const layananImageInputRef          = useRef<HTMLInputElement | null>(null);
+  const layananVideoInputRef          = useRef<HTMLInputElement | null>(null);
+  const portfolioImageInputRef        = useRef<HTMLInputElement | null>(null);
+  const portfolioVideoInputRef        = useRef<HTMLInputElement | null>(null);
   const pesanTimer                    = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tampilPesan = (teks: string, tipe: "sukses" | "error" | "info" = "sukses") => {
     setPesan({ teks, tipe });
     if (pesanTimer.current) clearTimeout(pesanTimer.current);
     pesanTimer.current = setTimeout(() => setPesan(null), 4500);
+  };
+
+  const bersihkanMediaPortofolio = () => {
+    setMediaPortofolio((prev) => {
+      prev.forEach((item) => {
+        if (item.file) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+      });
+      return [];
+    });
+  };
+
+  const bersihkanMediaLayanan = () => {
+    setMediaLayanan((prev) => {
+      prev.forEach((item) => {
+        if (item.file) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+      });
+      return [];
+    });
   };
 
   useEffect(() => {
@@ -123,6 +165,8 @@ export default function DashboardAdmin() {
     setPesan(null);
     setDaftarGambar([]);
     setDaftarVideo([]);
+    bersihkanMediaLayanan();
+    bersihkanMediaPortofolio();
   }, [seksiAktif, token]);
 
   useEffect(() => {
@@ -171,6 +215,15 @@ export default function DashboardAdmin() {
   const simpanItem = async () => {
     if (!token) return;
 
+    if (seksiAktif === "portfolio_items") {
+      const wajib = ["category", "title", "location", "year"];
+      const nilaiKosong = wajib.some((field) => !String(form[field] ?? "").trim());
+      if (nilaiKosong) {
+        tampilPesan("Kategori, judul, lokasi, dan tahun wajib diisi.", "error");
+        return;
+      }
+    }
+
     if (
       fieldSeksi[seksiAktif].includes("category") &&
       form.category === "__new__" &&
@@ -206,12 +259,6 @@ export default function DashboardAdmin() {
       }
     }
 
-    // Selalu kirim nilai media agar sinkron saat tambah/edit/hapus media.
-    if (seksiAktif === "portfolio_items" || seksiAktif === "services") {
-      body.images = JSON.stringify(daftarGambar);
-      body.videos = JSON.stringify(daftarVideo.slice(0, 1));
-    }
-
     const method = editingId ? "PUT" : "POST";
     const url    = editingId ? `${meta.api}?id=${editingId}` : meta.api;
     const res    = await fetch(url, {
@@ -221,13 +268,69 @@ export default function DashboardAdmin() {
     });
     const json = await res.json();
     tampilPesan(json.message || (res.ok ? "Berhasil disimpan" : "Gagal menyimpan"), res.ok ? "sukses" : "error");
-    if (res.ok) { 
+    if (res.ok) {
+      if (seksiAktif === "portfolio_items") {
+        const portfolioId = Number(json?.data?.id ?? editingId);
+        if (Number.isFinite(portfolioId) && mediaPortofolio.some((item) => item.file)) {
+          for (let index = 0; index < mediaPortofolio.length; index += 1) {
+            const item = mediaPortofolio[index];
+            if (!item.file) continue;
+
+            const mediaFormData = new FormData();
+            mediaFormData.append("portfolioId", String(portfolioId));
+            mediaFormData.append("file", item.file);
+            mediaFormData.append("fileType", item.fileType);
+            mediaFormData.append("urutan", String(index));
+
+            const uploadRes = await fetch("/api/admin/portfolio/media", {
+              method: "POST",
+              headers: { "x-admin-token": token },
+              body: mediaFormData,
+            });
+            const uploadJson = await uploadRes.json();
+            if (!uploadRes.ok) {
+              tampilPesan(uploadJson.message || "Ada media portofolio yang gagal diunggah.", "error");
+              break;
+            }
+          }
+        }
+      }
+
+      if (seksiAktif === "services") {
+        const serviceId = Number(json?.data?.id ?? editingId);
+        if (Number.isFinite(serviceId) && mediaLayanan.some((item) => item.file)) {
+          for (let index = 0; index < mediaLayanan.length; index += 1) {
+            const item = mediaLayanan[index];
+            if (!item.file) continue;
+
+            const mediaFormData = new FormData();
+            mediaFormData.append("serviceId", String(serviceId));
+            mediaFormData.append("file", item.file);
+            mediaFormData.append("mediaType", item.fileType);
+            mediaFormData.append("urutan", String(index));
+
+            const uploadRes = await fetch("/api/admin/services/media", {
+              method: "POST",
+              headers: { "x-admin-token": token },
+              body: mediaFormData,
+            });
+            const uploadJson = await uploadRes.json();
+            if (!uploadRes.ok) {
+              tampilPesan(uploadJson.message || "Ada media layanan yang gagal diunggah.", "error");
+              break;
+            }
+          }
+        }
+      }
+
       muatSeksi(token, seksiAktif); 
       setForm({}); 
       setKategoriBaru(""); 
       setEditingId(null); 
       setDaftarGambar([]);
       setDaftarVideo([]);
+      bersihkanMediaLayanan();
+      bersihkanMediaPortofolio();
     }
   };
 
@@ -260,8 +363,37 @@ export default function DashboardAdmin() {
       return [];
     };
 
-    setDaftarGambar(parseMediaList(item.images));
-    setDaftarVideo(parseMediaList(item.videos).slice(0, 1));
+    if (seksiAktif === "services") {
+      bersihkanMediaLayanan();
+      const media = Array.isArray(item.media) ? item.media : [];
+      setMediaLayanan(
+        media.map((entry: any, index: number) => ({
+          key: `persist-${entry.id ?? index}`,
+          id: entry.id,
+          fileType: entry.fileType || entry.file_type || entry.mediaType || entry.media_type || "image",
+          previewUrl: entry.url || entry.previewUrl || entry.media_url || "",
+          fileName: entry.fileName || entry.file_name || "",
+        })),
+      );
+    } else {
+      bersihkanMediaLayanan();
+    }
+
+    if (seksiAktif === "portfolio_items") {
+      bersihkanMediaPortofolio();
+      const media = Array.isArray(item.media) ? item.media : [];
+      setMediaPortofolio(
+        media.map((entry: any, index: number) => ({
+          key: `persist-${entry.id ?? index}`,
+          id: entry.id,
+          fileType: entry.fileType || entry.file_type || "image",
+          previewUrl: entry.url || entry.previewUrl || entry.media_url || "",
+          fileName: entry.fileName || entry.file_name || "",
+        })),
+      );
+    } else {
+      bersihkanMediaPortofolio();
+    }
     
     tampilPesan(`Mode edit aktif — ${metaSeksi[seksiAktif].label}`, "info");
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -277,7 +409,109 @@ export default function DashboardAdmin() {
     if (res.ok) muatSeksi(token, seksiAktif);
   };
 
-  const batalEdit = () => { setEditingId(null); setForm({}); setPesan(null); setDaftarGambar([]); setDaftarVideo([]); };
+  const batalEdit = () => { setEditingId(null); setForm({}); setPesan(null); setDaftarGambar([]); setDaftarVideo([]); bersihkanMediaLayanan(); bersihkanMediaPortofolio(); };
+
+  const handleTambahMediaLayanan = async (e: ChangeEvent<HTMLInputElement>, fileType: "image" | "video") => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const allowed = fileType === "image" ? /^image\// : /^video\//;
+    const isServiceSaved = Boolean(editingId);
+    const nextItems: Array<{
+      key: string;
+      id?: number;
+      fileType: "image" | "video";
+      previewUrl: string;
+      fileName: string;
+      file?: File;
+    }> = [];
+
+    try {
+      setUnggahField(fileType);
+
+      for (let i = 0; i < files.length; i += 1) {
+        const file = files[i];
+        if (!allowed.test(file.type)) continue;
+
+        if (isServiceSaved && token && Number.isFinite(Number(editingId))) {
+          const mediaFormData = new FormData();
+          mediaFormData.append("serviceId", String(editingId));
+          mediaFormData.append("file", file);
+          mediaFormData.append("mediaType", fileType);
+          mediaFormData.append("urutan", String(mediaLayanan.length + nextItems.length));
+
+          const uploadRes = await fetch("/api/admin/services/media", {
+            method: "POST",
+            headers: { "x-admin-token": token },
+            body: mediaFormData,
+          });
+          const uploadJson = await uploadRes.json();
+
+          if (!uploadRes.ok || !uploadJson?.data?.id) {
+            tampilPesan(uploadJson.message || "Gagal mengunggah media layanan.", "error");
+            continue;
+          }
+
+          nextItems.push({
+            key: `persist-${uploadJson.data.id}`,
+            id: Number(uploadJson.data.id),
+            fileType,
+            previewUrl: `/api/services/media/${uploadJson.data.id}`,
+            fileName: file.name,
+          });
+        } else {
+          nextItems.push({
+            key: `${Date.now()}-${i}-${file.name}`,
+            fileType,
+            previewUrl: URL.createObjectURL(file),
+            fileName: file.name,
+            file,
+          });
+        }
+
+        if (fileType === "video") break;
+      }
+
+      if (nextItems.length > 0) {
+        setMediaLayanan((prev) => [...prev, ...nextItems]);
+      }
+    } finally {
+      setUnggahField(null);
+      e.target.value = "";
+    }
+  };
+
+  const hapusMediaLayanan = async (key: string) => {
+    const target = mediaLayanan.find((item) => item.key === key);
+    if (!target) return;
+
+    if (target.file) {
+      URL.revokeObjectURL(target.previewUrl);
+      setMediaLayanan((prev) => prev.filter((item) => item.key !== key));
+      return;
+    }
+
+    if (!target.id) return;
+
+    if (!confirm("Yakin ingin menghapus media ini?")) return;
+
+    try {
+      const res = await fetch(`/api/admin/services/media?id=${target.id}`, {
+        method: "DELETE",
+        headers: { "x-admin-token": token },
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        tampilPesan(json.message || "Gagal menghapus media.", "error");
+        return;
+      }
+
+      setMediaLayanan((prev) => prev.filter((item) => item.key !== key));
+      tampilPesan(json.message || "Media berhasil dihapus", "sukses");
+    } catch {
+      tampilPesan("Gagal menghapus media.", "error");
+    }
+  };
 
   const uploadGambar = async (file: File, fileType: "image" | "video" = "image") => {
     if (!token) {
@@ -365,6 +599,73 @@ export default function DashboardAdmin() {
     setDaftarVideo([]);
   };
 
+  const handleTambahMediaPortofolio = async (e: ChangeEvent<HTMLInputElement>, fileType: "image" | "video") => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const allowed = fileType === "image" ? /^image\// : /^video\//;
+    const nextItems: Array<{
+      key: string;
+      fileType: "image" | "video";
+      previewUrl: string;
+      fileName: string;
+      file: File;
+    }> = [];
+
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i];
+      if (!allowed.test(file.type)) continue;
+
+      nextItems.push({
+        key: `${Date.now()}-${i}-${file.name}`,
+        fileType,
+        previewUrl: URL.createObjectURL(file),
+        fileName: file.name,
+        file,
+      });
+
+      if (fileType === "video") break;
+    }
+
+    if (nextItems.length > 0) {
+      setMediaPortofolio((prev) => [...prev, ...nextItems]);
+    }
+
+    e.target.value = "";
+  };
+
+  const hapusMediaPortofolio = async (key: string) => {
+    const target = mediaPortofolio.find((item) => item.key === key);
+    if (!target) return;
+
+    if (target.file) {
+      URL.revokeObjectURL(target.previewUrl);
+      setMediaPortofolio((prev) => prev.filter((item) => item.key !== key));
+      return;
+    }
+
+    if (!target.id) return;
+
+    if (!confirm("Yakin ingin menghapus media ini?")) return;
+
+    try {
+      const res = await fetch(`/api/admin/portfolio/media?id=${target.id}`, {
+        method: "DELETE",
+        headers: { "x-admin-token": token },
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        tampilPesan(json.message || "Gagal menghapus media.", "error");
+        return;
+      }
+
+      setMediaPortofolio((prev) => prev.filter((item) => item.key !== key));
+      tampilPesan(json.message || "Media berhasil dihapus", "sukses");
+    } catch {
+      tampilPesan("Gagal menghapus media.", "error");
+    }
+  };
+
   /* ── RENDER BARIS TABEL ── */
   const renderBaris = (item: any, index: number) => {
     if (!item) return null;
@@ -375,6 +676,36 @@ export default function DashboardAdmin() {
         {kunci.map((k) => {
           const nilai = item[k];
           let tampilan: string;
+
+          if (k === "media" && Array.isArray(nilai)) {
+            const jumlahGambar = nilai.filter((entry: any) => {
+              const tipe = String(
+                entry?.fileType ??
+                entry?.file_type ??
+                entry?.mediaType ??
+                entry?.media_type ??
+                "",
+              ).toLowerCase();
+              return tipe === "image";
+            }).length;
+            const jumlahVideo = nilai.filter((entry: any) => {
+              const tipe = String(
+                entry?.fileType ??
+                entry?.file_type ??
+                entry?.mediaType ??
+                entry?.media_type ??
+                "",
+              ).toLowerCase();
+              return tipe === "video";
+            }).length;
+            return (
+              <td key={`${rowKey}-${k}`} className="px-4 py-3 text-xs text-slate-700 border-b border-slate-100 align-top">
+                <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 font-semibold text-indigo-700">
+                  {jumlahGambar} foto{jumlahVideo > 0 ? `, ${jumlahVideo} video` : ""}
+                </span>
+              </td>
+            );
+          }
           
           if (typeof nilai === "boolean" || nilai === "true" || nilai === "false") {
              const v = String(nilai) === "true";
@@ -561,7 +892,6 @@ export default function DashboardAdmin() {
                 const isTextarea = textareaFields.has(field);
                 const isAktifField = field === "aktif";
                 const isKategoriField = field === "category" && (seksiAktif === "services" || seksiAktif === "portfolio_items");
-                const isImageField = field === "image" && (seksiAktif === "services" || seksiAktif === "portfolio_items");
                 const isAktif = form[field] === "1" || form[field] === "true" || form[field] === true;
                 const nilaiKategori = String(form[field] ?? "");
                 const butuhOpsiKategoriSaatEdit = isKategoriField && nilaiKategori && nilaiKategori !== "__new__" && !opsiKategori.includes(nilaiKategori);
@@ -611,87 +941,6 @@ export default function DashboardAdmin() {
                           />
                         )}
                       </div>
-                    ) : isImageField ? (
-                      <div className="space-y-3 sm:col-span-2 xl:col-span-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-xs font-semibold text-slate-700">Media Proyek</p>
-                          <p className="text-[11px] text-slate-500">Foto: {daftarGambar.length} • Video: {daftarVideo.length}/1</p>
-                        </div>
-
-                        <input
-                          ref={multiImageInputRef}
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={handleTambahGambar}
-                          className="hidden"
-                        />
-                        <input
-                          ref={videoInputRef}
-                          type="file"
-                          accept="video/*"
-                          onChange={handleTambahVideo}
-                          className="hidden"
-                          disabled={daftarVideo.length > 0}
-                        />
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => multiImageInputRef.current?.click()}
-                            disabled={unggahField === "image"}
-                            className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 text-white text-xs font-semibold px-3 py-2.5 rounded-lg transition-all"
-                          >
-                            <Upload className="w-4 h-4" />
-                            {unggahField === "image" ? "Mengunggah Foto..." : "Tambah Foto"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => videoInputRef.current?.click()}
-                            disabled={unggahField === "video" || daftarVideo.length > 0}
-                            className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 disabled:opacity-50 text-white text-xs font-semibold px-3 py-2.5 rounded-lg transition-all"
-                          >
-                            <Upload className="w-4 h-4" />
-                            {unggahField === "video" ? "Mengunggah Video..." : daftarVideo.length > 0 ? "Video Sudah Ada" : "Tambah Video"}
-                          </button>
-                        </div>
-
-                        {daftarGambar.length > 0 && (
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            {daftarGambar.map((path, idx) => (
-                              <div key={idx} className="relative group">
-                                <div className="aspect-square bg-white rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center p-2">
-                                  <img src={path} alt={`Gambar ${idx + 1}`} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = "/images/portfolio/default.svg"; }} />
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleHapusGambar(idx)}
-                                  className="absolute inset-0 bg-slate-900/60 rounded-lg items-center justify-center gap-1 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 group-hover:flex transition-opacity"
-                                >
-                                  <Trash2 className="w-4 h-4" /> Hapus
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {daftarVideo.length > 0 && (
-                          <div className="relative group">
-                            <div className="aspect-video bg-slate-900 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center">
-                              <video src={daftarVideo[0]} className="w-full h-full object-contain" controls />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={handleHapusVideo}
-                              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded transition-colors inline-flex items-center gap-1"
-                            >
-                              <Trash2 className="w-3 h-3" /> Hapus
-                            </button>
-                          </div>
-                        )}
-
-                        <p className="text-[11px] text-slate-500">Upload media dalam 1 form: bisa banyak foto dan maksimal 1 video.</p>
-                      </div>
                     ) : isTextarea ? (
                       <textarea
                         rows={3}
@@ -711,6 +960,152 @@ export default function DashboardAdmin() {
                   </div>
                 );
               })}
+
+              {seksiAktif === "portfolio_items" && (
+                <div className="sm:col-span-2 xl:col-span-3 space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-700">Media Portofolio</p>
+                      <p className="text-[11px] text-slate-500">Simpan item dulu untuk menambahkan media baru. Media lama bisa dihapus langsung.</p>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      {mediaPortofolio.filter((item) => item.fileType === "image").length} foto • {mediaPortofolio.filter((item) => item.fileType === "video").length} video
+                    </p>
+                  </div>
+
+                  <input
+                    ref={portfolioImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleTambahMediaPortofolio(e, "image")}
+                    className="hidden"
+                  />
+                  <input
+                    ref={portfolioVideoInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => handleTambahMediaPortofolio(e, "video")}
+                    className="hidden"
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => portfolioImageInputRef.current?.click()}
+                      className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black text-white text-xs font-semibold px-3 py-2.5 rounded-lg transition-all"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Tambah Foto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => portfolioVideoInputRef.current?.click()}
+                      className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold px-3 py-2.5 rounded-lg transition-all"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Tambah Video
+                    </button>
+                  </div>
+
+                  {mediaPortofolio.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {mediaPortofolio.map((media) => (
+                        <div key={media.key} className="relative group rounded-lg overflow-hidden border border-slate-200 bg-white">
+                          <div className="aspect-square bg-slate-100">
+                            {media.fileType === "video" ? (
+                              <video src={media.previewUrl} className="h-full w-full object-cover" controls />
+                            ) : (
+                              <img src={media.previewUrl} alt={media.fileName} className="h-full w-full object-cover" />
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => hapusMediaPortofolio(media.key)}
+                            className="absolute inset-x-2 bottom-2 inline-flex items-center justify-center gap-1 rounded-md bg-slate-900/85 px-3 py-1.5 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Hapus
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {seksiAktif === "services" && (
+                <div className="sm:col-span-2 xl:col-span-3 space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-700">Media Layanan</p>
+                      <p className="text-[11px] text-slate-500">Simpan item dulu untuk menambahkan media baru. Media lama bisa dihapus langsung.</p>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      {mediaLayanan.filter((item) => item.fileType === "image").length} foto • {mediaLayanan.filter((item) => item.fileType === "video").length} video
+                    </p>
+                  </div>
+
+                  <input
+                    ref={layananImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleTambahMediaLayanan(e, "image")}
+                    className="hidden"
+                  />
+                  <input
+                    ref={layananVideoInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => handleTambahMediaLayanan(e, "video")}
+                    className="hidden"
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => layananImageInputRef.current?.click()}
+                      className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-semibold px-3 py-2.5 rounded-lg transition-all"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Tambah Foto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => layananVideoInputRef.current?.click()}
+                      className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs font-semibold px-3 py-2.5 rounded-lg transition-all"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Tambah Video
+                    </button>
+                  </div>
+
+                  {mediaLayanan.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {mediaLayanan.map((media) => (
+                        <div key={media.key} className="relative group rounded-lg overflow-hidden border border-slate-200 bg-white">
+                          <div className="aspect-square bg-slate-100">
+                            {media.fileType === "video" ? (
+                              <video src={media.previewUrl} className="h-full w-full object-cover" controls />
+                            ) : (
+                              <img src={media.previewUrl} alt={media.fileName} className="h-full w-full object-cover" />
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => hapusMediaLayanan(media.key)}
+                            className="absolute inset-x-2 bottom-2 inline-flex items-center justify-center gap-1 rounded-md bg-slate-900/85 px-3 py-1.5 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Hapus
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Tombol aksi form */}
@@ -724,7 +1119,7 @@ export default function DashboardAdmin() {
                   <X className="w-4 h-4" /> Batal
                 </button>
               )}
-              <button onClick={() => { setForm({}); setKategoriBaru(""); setDaftarGambar([]); setDaftarVideo([]); }} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-medium text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 transition-all duration-200 ml-auto sm:ml-0">
+              <button onClick={() => { setForm({}); setKategoriBaru(""); setDaftarGambar([]); setDaftarVideo([]); bersihkanMediaLayanan(); bersihkanMediaPortofolio(); }} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-medium text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 transition-all duration-200 ml-auto sm:ml-0">
                 <Eraser className="w-4 h-4" /> Bersihkan
               </button>
             </div>

@@ -1,17 +1,11 @@
 import { NextResponse } from "next/server";
-import supabase from "@/lib/db";
+import { getPortfolioItems } from "@/lib/content";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
-      .from("portfolio_items")
-      .select("id, category, title, location, year, image, description")
-      .eq("aktif", true)
-      .order("urutan", { ascending: true })
-      .order("id", { ascending: false });
-    if (error) throw error;
+    const data = await getPortfolioItems();
     return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error("Portfolio API Error:", error);

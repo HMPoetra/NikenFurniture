@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import supabase from "@/lib/db";
+import { normalizePortfolioMediaItem } from "@/lib/portfolio-media";
 
 export const dynamic = "force-dynamic";
-
-function resolveImagePath(image: string | null | undefined): string {
-  if (!image) return "/images/portfolio/default.jpg";
-  return image.startsWith("/") ? image : `/images/portfolio/${image}`;
-}
 
 function requireAuth(req: NextRequest) {
   const token = req.headers.get("x-admin-token");
@@ -15,21 +11,59 @@ function requireAuth(req: NextRequest) {
   }
 }
 
-function isMissingMediaColumnError(error: unknown): boolean {
-  const message = String((error as any)?.message || "").toLowerCase();
-  return message.includes("column") && (message.includes("images") || message.includes("videos"));
+type PortfolioItemRow = {
+  id: number;
+  category: string;
+  title: string;
+  location: string;
+  year: string;
+  description: string | null;
+  urutan: number | null;
+  aktif: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
+  portfolio_media:
+    | Array<{
+        id: number;
+        file_type: string;
+        file_name: string | null;
+        urutan: number | null;
+      }>
+    | null;
+};
+
+function mapPortfolioItem(row: PortfolioItemRow) {
+  const media = (row.portfolio_media || [])
+    .map((entry) => normalizePortfolioMediaItem(entry))
+    .sort((left, right) => left.urutan - right.urutan || left.id - right.id);
+  const coverMedia = media.find((entry) => entry.fileType === "image") ?? null;
+
+  return {
+    id: row.id,
+    category: row.category,
+    title: row.title,
+    location: row.location,
+    year: row.year,
+    description: row.description || "",
+    urutan: row.urutan ?? 0,
+    aktif: row.aktif ?? true,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    image: coverMedia?.url ?? null,
+    coverMediaUrl: coverMedia?.url ?? null,
+    media,
+  };
 }
 
 export async function GET() {
   try {
     const { data, error } = await supabase
       .from("portfolio_items")
-      .select("*")
-      .eq("aktif", true)
+      .select("id, category, title, location, year, description, urutan, aktif, created_at, updated_at, portfolio_media(id, file_type, file_name, urutan)")
       .order("urutan", { ascending: true });
     if (error) throw error;
-    return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+    return NextResponse.json({ success: true, data: (data as PortfolioItemRow[]).map(mapPortfolioItem) });
+  } catch (error) {
     console.error("Database Error:", error);
     return NextResponse.json(
       { success: false, message: "Gagal mengambil data" },
@@ -42,34 +76,37 @@ export async function POST(req: NextRequest) {
   try {
     requireAuth(req);
     const body = await req.json();
-    const { category, title, location, year, image, description, urutan, aktif, images, videos } = body;
-    const finalPath = resolveImagePath(image);
+    const { category, title, location, year, description, urutan, aktif } = body;
+
+    if (!category || !title || !location || !year) {
+      return NextResponse.json(
+        { success: false, message: "Kategori, judul, lokasi, dan tahun wajib diisi" },
+        { status: 400 },
+      );
+    }
 
     const payload = {
       category,
       title,
       location,
       year,
-      image: finalPath,
       description: description || "",
       urutan: Number(urutan) || 0,
       aktif: aktif ? true : false,
-      images: images || null,
-      videos: videos || null,
+      updated_at: new Date().toISOString(),
     };
 
-    let { error } = await supabase.from("portfolio_items").insert(payload);
-    if (error && isMissingMediaColumnError(error)) {
-      const { images: _images, videos: _videos, ...legacyPayload } = payload;
-      const fallback = await supabase.from("portfolio_items").insert(legacyPayload);
-      error = fallback.error;
-    }
+    const { data, error } = await supabase
+      .from("portfolio_items")
+      .insert(payload)
+      .select("id")
+      .single();
     if (error) throw error;
-    return NextResponse.json({ success: true, message: "Berhasil ditambah" });
+    return NextResponse.json({ success: true, message: "Berhasil ditambah", data });
   } catch (error: any) {
-    const status = error.message === "unauthorized" ? 401 : 500;
+    const status = error?.message === "unauthorized" ? 401 : 500;
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: error?.message || "Gagal menambah data" },
       { status }
     );
   }
@@ -91,9 +128,9 @@ export async function DELETE(req: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ success: true, message: "Berhasil dihapus" });
   } catch (error: any) {
-    const status = error.message === "unauthorized" ? 401 : 500;
+    const status = error?.message === "unauthorized" ? 401 : 500;
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: error?.message || "Gagal menghapus data" },
       { status }
     );
   }
@@ -109,20 +146,24 @@ export async function PUT(req: NextRequest) {
         { status: 400 }
       );
     const body = await req.json();
-    const { category, title, location, year, image, description, urutan, aktif, images, videos } = body;
-    const finalPath = resolveImagePath(image);
+      const { category, title, location, year, description, urutan, aktif } = body;
+
+      if (!category || !title || !location || !year) {
+        return NextResponse.json(
+          { success: false, message: "Kategori, judul, lokasi, dan tahun wajib diisi" },
+          { status: 400 },
+        );
+      }
 
     const payload = {
         category,
         title,
         location,
         year,
-        image: finalPath,
         description: description || "",
         urutan: Number(urutan) || 0,
         aktif: aktif ? true : false,
-        images: images || null,
-        videos: videos || null,
+        updated_at: new Date().toISOString(),
       };
 
     let { error } = await supabase
@@ -130,21 +171,12 @@ export async function PUT(req: NextRequest) {
       .update(payload)
       .eq("id", id);
 
-    if (error && isMissingMediaColumnError(error)) {
-      const { images: _images, videos: _videos, ...legacyPayload } = payload;
-      const fallback = await supabase
-        .from("portfolio_items")
-        .update(legacyPayload)
-        .eq("id", id);
-      error = fallback.error;
-    }
-
     if (error) throw error;
     return NextResponse.json({ success: true, message: "Berhasil diupdate" });
   } catch (error: any) {
-    const status = error.message === "unauthorized" ? 401 : 500;
+    const status = error?.message === "unauthorized" ? 401 : 500;
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: error?.message || "Gagal mengupdate data" },
       { status }
     );
   }

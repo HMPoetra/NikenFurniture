@@ -1,0 +1,15 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10223F"/>
+      <stop offset="1" stop-color="#1E3358"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <rect x="140" y="110" width="920" height="480" rx="22" stroke="#5E759C" stroke-width="8"/>
+  <path d="M200 520L430 280L600 430L760 320L1010 520" stroke="#5E759C" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="430" cy="250" r="52" stroke="#5E759C" stroke-width="8"/>
+  <text x="600" y="640" text-anchor="middle" fill="#DBEAFE" font-size="46" font-family="Arial, sans-serif" font-weight="700">
+    Niken Furniture Services
+  </text>
+</svg>

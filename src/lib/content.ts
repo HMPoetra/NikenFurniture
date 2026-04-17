@@ -1,15 +1,26 @@
 import supabase from "@/lib/db";
 import type { CompanyInfo } from "@/lib/site";
+import { normalizePortfolioMediaItem } from "@/lib/portfolio-media";
+import { normalizeServiceMediaItem } from "@/lib/service-media";
 
 type ServiceRow = {
+  id: number;
   slug: string;
   category: string;
   title: string;
   description: string | null;
-  features: string[] | null;
+  features: unknown;
   color: string | null;
-  image: string | null;
-  urutan: number;
+  urutan: number | null;
+  aktif: boolean | null;
+  service_media:
+    | Array<{
+        id: number;
+        media_type: string;
+        file_name: string | null;
+        urutan: number | null;
+      }>
+    | null;
 };
 
 type PortfolioRow = {
@@ -18,8 +29,17 @@ type PortfolioRow = {
   title: string;
   location: string | null;
   year: string | null;
-  image: string | null;
   description: string | null;
+  urutan: number | null;
+  aktif: boolean | null;
+  portfolio_media:
+    | Array<{
+        id: number;
+        file_type: string;
+        file_name: string | null;
+        urutan: number | null;
+      }>
+    | null;
 };
 
 type ExperienceRow = {
@@ -36,6 +56,44 @@ type TestimonialRow = {
   text_ulasan: string;
   rating: number;
 };
+
+function decodeHexPath(value: string) {
+  const trimmed = value.trim();
+  const hexValue = trimmed.startsWith("\\x") ? trimmed.slice(2) : trimmed;
+
+  if (!/^[0-9a-fA-F]+$/.test(hexValue) || hexValue.length % 2 !== 0) {
+    return value;
+  }
+
+  try {
+    let out = "";
+    for (let i = 0; i < hexValue.length; i += 2) {
+      out += String.fromCharCode(Number.parseInt(hexValue.slice(i, i + 2), 16));
+    }
+    return out;
+  } catch {
+    return value;
+  }
+}
+
+function normalizeServiceMediaPath(value: string | null | undefined) {
+  if (!value) return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const decoded = trimmed.startsWith("\\x") ? decodeHexPath(trimmed) : trimmed;
+
+  if (decoded.startsWith("http") || decoded.startsWith("/")) {
+    return decoded;
+  }
+
+  if (decoded.startsWith("images/services/")) {
+    return `/${decoded}`;
+  }
+
+  return `/images/services/${decoded.replace(/^\/+/, "")}`;
+}
 
 function parseJsonArray(value: string[] | string | null) {
   if (!value) return [];
@@ -84,22 +142,36 @@ export async function getCompanyInfo() {
 export async function getServices() {
   const { data, error } = await supabase
     .from("services")
-    .select("*")
+    .select("id, slug, category, title, description, features, color, urutan, aktif, service_media(id, media_type, file_name, urutan)")
     .eq("aktif", true)
     .order("urutan", { ascending: true })
     .order("id", { ascending: false });
   if (error) throw error;
 
-  return (data as ServiceRow[]).map((item) => ({
-    id: item.slug,
-    category: item.category,
-    title: item.title,
-    description: item.description || "",
-    features: parseJsonArray(item.features),
-    color: item.color || "from-slate-700 to-slate-500",
-    image: item.image,
-    urutan: item.urutan,
-  }));
+  return (data as ServiceRow[]).map((item) => {
+    const media = (item.service_media || [])
+      .map((entry) => normalizeServiceMediaItem(entry))
+      .sort((left, right) => left.urutan - right.urutan || left.id - right.id);
+    const images = media.filter((entry) => entry.mediaType === "image");
+    const videos = media.filter((entry) => entry.mediaType === "video");
+    const coverImage = images[0] ?? null;
+
+    return {
+      id: item.slug,
+      slug: item.slug,
+      category: item.category,
+      title: item.title,
+      description: item.description || "",
+      features: parseJsonArray(item.features),
+      color: item.color || "from-slate-700 to-slate-500",
+      image: coverImage?.url ?? null,
+      images: images.map((entry) => entry.url),
+      videos: videos.map((entry) => entry.url),
+      media,
+      urutan: item.urutan ?? 0,
+      aktif: item.aktif ?? true,
+    };
+  });
 }
 
 export async function getServiceById(id: string) {
@@ -110,21 +182,32 @@ export async function getServiceById(id: string) {
 export async function getPortfolioItems() {
   const { data, error } = await supabase
     .from("portfolio_items")
-    .select("*")
+    .select("id, category, title, location, year, description, urutan, aktif, portfolio_media(id, file_type, file_name, urutan)")
     .eq("aktif", true)
     .order("urutan", { ascending: true })
     .order("id", { ascending: false });
   if (error) throw error;
 
-  return (data as PortfolioRow[]).map((item) => ({
-    id: item.id,
-    category: item.category,
-    title: item.title,
-    location: item.location || "",
-    year: item.year || "",
-    image: item.image,
-    description: item.description || "",
-  }));
+  return (data as PortfolioRow[]).map((item) => {
+    const media = (item.portfolio_media || [])
+      .map((entry) => normalizePortfolioMediaItem(entry))
+      .sort((left, right) => left.urutan - right.urutan || left.id - right.id);
+    const coverMedia = media.find((entry) => entry.fileType === "image") ?? null;
+
+    return {
+      id: item.id,
+      category: item.category,
+      title: item.title,
+      location: item.location || "",
+      year: item.year || "",
+      image: coverMedia?.url ?? null,
+      coverMediaUrl: coverMedia?.url ?? null,
+      media,
+      description: item.description || "",
+      urutan: item.urutan ?? 0,
+      aktif: item.aktif ?? true,
+    };
+  });
 }
 
 export async function getPortfolioItemById(id: string | number) {
